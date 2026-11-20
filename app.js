@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.11.1";
+  var VERSION = "1.11.2";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -191,15 +191,16 @@
 
   function renderToday() {
     grid.classList.toggle("picked", tapped && selected !== null);
-    var wasHidden = noteEl.parentNode.hidden;
-    noteEl.parentNode.hidden = selected === null;
-    if (wasHidden && selected !== null) growNote();
+    var after = $("after-pick"), wasClosed = after.classList.contains("closed");
+    after.classList.toggle("closed", selected === null);
+    after.inert = selected === null;
+    if (wasClosed && selected !== null) growNote();
+    if (after.classList.contains("instant")) requestAnimationFrame(function () { requestAnimationFrame(function () { after.classList.remove("instant"); }); });
     rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
     var slot = $("level-slot");
-    if (selected === null) slot.innerHTML = "";
-    else {
+    if (selected !== null) {
       var dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
       var arrow = { up: "M7 17L17 7M8.5 7H17v8.5", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 8.5V17H8.5" }[dir];
       slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
@@ -210,7 +211,6 @@
     renderStreak();
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
-    saveBtn.hidden = selected === null;
     var label = savedRating === null ? "Save" : (changed ? "Update" : "Saved");
     saveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>' + label;
     $("delete-day").hidden = savedRating === null;

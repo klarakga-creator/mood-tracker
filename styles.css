@@ -83,7 +83,7 @@ button { font: inherit; color: inherit; }
 .rate-bar::before { content: ""; position: absolute; left: calc(50% / var(--n)); right: calc(50% / var(--n)); top: 50%; height: 2px; margin-top: -1px; background: var(--sep); }
 .rate { --c: var(--ph-bal); --on: #fff; position: relative; width: 42px; height: 42px; padding: 0; border-radius: 50%; border: 0; cursor: pointer;
   background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
-  transition: transform .18s cubic-bezier(.3,1.4,.5,1), background-color .18s, color .18s; }
+  transition: transform .32s cubic-bezier(.3,1.35,.5,1), background-color .3s ease, color .3s ease, box-shadow .3s ease; }
 .rate::after { content: ""; position: absolute; inset: -8px -3px; }
 .rate-grid.picked .rate { background: var(--tile); color: var(--rate-off); }
 .rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.25); }
@@ -215,7 +215,14 @@ button.cell, label.cell.link { cursor: pointer; }
 .toast { max-width: calc(100% - 32px); white-space: normal; text-align: center;
   position: fixed; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 12px); transform: translateX(-50%); background: var(--glass); border: 1px solid var(--glass-edge); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border-radius: 999px; padding: 10px 16px; font-size: 14px; font-weight: 500; z-index: 9; box-shadow: 0 6px 20px rgba(0,0,0,.15); }
 
-@media (prefers-reduced-motion: reduce) { .level, .sheet-panel { animation: none; } .rate, .toggle span, .toggle span::after { transition: none; } }
+.after-pick { display: grid; grid-template-rows: 1fr; align-self: start; opacity: 1; transform: none;
+  transition: grid-template-rows .38s cubic-bezier(.4,0,.2,1), opacity .3s ease .05s, transform .38s cubic-bezier(.4,0,.2,1), margin-top .38s cubic-bezier(.4,0,.2,1); }
+.after-pick.closed { grid-template-rows: 0fr; opacity: 0; transform: translateY(-8px); margin-top: -22px;
+  transition: grid-template-rows .32s cubic-bezier(.4,0,.2,1), opacity .2s ease, transform .32s cubic-bezier(.4,0,.2,1), margin-top .32s cubic-bezier(.4,0,.2,1); }
+.after-pick.instant { transition: none; }
+.after-inner { min-height: 0; overflow: hidden; }
+#level-slot:empty { display: none; }
+@media (prefers-reduced-motion: reduce) { .level, .sheet-panel { animation: none; } .rate, .toggle span, .toggle span::after, .after-pick { transition: none; } }
 
 @media print {
   body * { visibility: hidden; }
