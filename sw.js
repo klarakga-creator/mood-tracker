@@ -1,6 +1,6 @@
 // Offline support. Files come from the network when online (so updates show up
 // the next time the app opens) and from this cache when offline.
-const CACHE = "mood-v4";
+const CACHE = "mood-v5";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "config.js", "vendor/supabase.js", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 
@@ -20,7 +20,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
-    fetch(req)
+    fetch(req, { cache: "no-cache" })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy));

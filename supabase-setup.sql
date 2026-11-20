@@ -43,3 +43,6 @@ create policy "Own settings" on public.settings for all to authenticated
 drop policy if exists "Own push subscriptions" on public.push_subscriptions;
 create policy "Own push subscriptions" on public.push_subscriptions for all to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+-- Let signed-in users reach these tables (row-level security above still limits them to their own rows).
+grant select, insert, update, delete on public.entries, public.settings, public.push_subscriptions to authenticated;

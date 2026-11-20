@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.1.2";
+  var VERSION = "1.1.3";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -323,7 +323,9 @@
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && savedRating === null && selected === null && keyOf(day) !== keyOf(today())) setDay(today());
   });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(function (reg) {
+    document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") reg.update().catch(function () {}); });
+  }).catch(function () {});
 
   window.MoodApp = {
     entries: entries, settings: settings, Sync: Sync, toast: toast, persist: persistOnly,
