@@ -178,10 +178,9 @@
       var dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
       var arrow = { up: "M7 17L17 7M8.5 7H17v8.5", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 8.5V17H8.5" }[dir];
       slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
-        '<div class="level-top"><span class="ring">' + selected + '</span><span class="ring" aria-hidden="true">' +
+        '<div class="level-top"><span class="level-big">' + selected + '</span><span class="ring" aria-hidden="true">' +
         '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></span></div>' +
-        '<div class="level-main"><div><div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>' +
-        '<span class="level-big" aria-hidden="true">' + selected + '</span></div></div>';
+        '<div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>';
     }
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
