@@ -2,6 +2,8 @@
 // Runs every 15 minutes (see supabase-reminders.sql) and answers the app's test buttons.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import webpush from "npm:web-push@3.6.7";
+import { jsPDF } from "npm:jspdf@4.2.1";
+import "https://klarakga-creator.github.io/mood-tracker/report-pdf.js";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -126,13 +128,26 @@ export function reportHTML(y: number, m: number, days: { day: string; rating: nu
   const card = (inner: string) => `<div style="background:#fff;border-radius:20px;padding:18px;margin:0 0 14px">${inner}</div>`;
   return `<!doctype html><html><body style="margin:0;background:#F2F2F7;font-family:${font};color:#000">
   <div style="max-width:600px;margin:0 auto;padding:24px 14px">
-    <div style="padding:0 6px 16px"><div style="font-size:30px;font-weight:700;letter-spacing:-0.5px">Mood report</div><div style="font-size:19px;color:${muted}">${title}</div><div style="font-size:14px;color:${muted};margin-top:4px">${n} of ${dim} days rated, average ${avg.toFixed(1)}</div></div>
+    <div style="padding:0 6px 16px"><div style="font-size:30px;font-weight:700;letter-spacing:-0.5px">Mood report</div><div style="font-size:19px;color:${muted}">${title}</div><div style="font-size:14px;color:${muted};margin-top:4px">${n} of ${dim} days rated, average ${avg.toFixed(1)}</div><div style="font-size:14px;color:${muted};margin-top:4px">The full report is attached as a PDF.</div></div>
     ${card(`<div style="font-size:17px;font-weight:600;margin-bottom:12px">Mood over the month</div>${chart}<div style="font-size:12px;color:${muted};margin-top:8px">Bar height is the day's rating (0 to 10). The green band is the balanced range (4 to 6).</div>`)}
     <div style="margin:0 -5px 9px">${tiles}</div>
     ${card(`<div style="font-size:17px;font-weight:600;margin-bottom:6px">Time in each phase</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${phases}</table>`)}
     ${card(`<div style="font-size:17px;font-weight:600;margin-bottom:4px">Daily log</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${log || `<tr><td style="color:${muted};font-size:14px;padding:8px 0">No days rated this month.</td></tr>`}</table>`)}
     <div style="text-align:center;padding:8px"><a href="${APP_URL}" style="display:inline-block;background:#007AFF;color:#fff;text-decoration:none;font-weight:600;padding:12px 22px;border-radius:999px">Open Mood Tracker</a></div>
   </div></body></html>`;
+}
+
+// ---------- PDF report ----------
+// The PDF layout lives in the app's report-pdf.js; it is loaded from the live app when this function is deployed.
+type ReportDay = { day: number; rating: number; note: string };
+type ReportData = { year: number; month: number; days: ReportDay[]; today?: { year: number; month: number; day: number } };
+const buildReportPDF = (globalThis as unknown as { buildReportPDF: (lib: typeof jsPDF, data: ReportData) => jsPDF }).buildReportPDF;
+
+function toBase64(buf: ArrayBuffer) {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
 }
 
 async function sendReport(userId: string, email: string, y: number, m: number) {
@@ -143,10 +158,16 @@ async function sendReport(userId: string, email: string, y: number, m: number) {
     .eq("user_id", userId).eq("deleted", false).gte("day", start).lt("day", end).order("day");
   if (error) return { ok: false, error: error.message };
   const title = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+  const t = new Date();
+  const doc = buildReportPDF(jsPDF, { year: y, month: m, today: { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() }, days: (data ?? []).map((d) => ({ day: +d.day.slice(8, 10), rating: d.rating, note: d.note })) });
+  const pdf = toBase64(doc.output("arraybuffer"));
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: "Mood Tracker <onboarding@resend.dev>", to: [email], subject: `Mood report ${title}`, html: reportHTML(y, m, data ?? []) }),
+    body: JSON.stringify({
+      from: "Mood Tracker <onboarding@resend.dev>", to: [email], subject: `Mood report ${title}`, html: reportHTML(y, m, data ?? []),
+      attachments: [{ filename: `Mood report ${title}.pdf`, content: pdf }],
+    }),
   });
   if (!res.ok) return { ok: false, error: `Email service said: ${await res.text()}` };
   return { ok: true };

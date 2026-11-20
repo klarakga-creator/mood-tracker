@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.2.3";
+  var VERSION = "1.3.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -252,11 +252,50 @@
       '<div class="foot">Created ' + now.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) + " at " + now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) + " with Mood Tracker</div>" +
       '<button class="btn-prom" type="button" id="print-report">Save as PDF</button>';
   }
+  // The PDF library is only loaded once a report is opened, so the PDF is ready by the time a button is tapped.
+  var pdfLib = null;
+  function loadPDF() {
+    if (!pdfLib) pdfLib = new Promise(function (ok, fail) {
+      var n = 0;
+      ["vendor/jspdf.umd.min.js", "report-pdf.js"].forEach(function (src) {
+        var s = document.createElement("script"); s.src = src;
+        s.onload = function () { if (++n === 2) ok(); };
+        s.onerror = function () { pdfLib = null; fail(new Error("Could not load " + src)); };
+        document.head.appendChild(s);
+      });
+    });
+    return pdfLib;
+  }
+  function reportFile(y, m) {
+    var t = today();
+    var doc = window.buildReportPDF(window.jspdf.jsPDF, {
+      year: y, month: m + 1, today: { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() },
+      days: monthDays(y, m).map(function (p) { return { day: p.d.getDate(), rating: p.r, note: p.n }; })
+    });
+    var name = "Mood report " + monthTitle(y, m) + ".pdf";
+    return new File([doc.output("blob")], name, { type: "application/pdf" });
+  }
+  function download(file) {
+    var url = URL.createObjectURL(file), a = document.createElement("a");
+    a.href = url; a.download = file.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+  }
+  // On iPhone the share sheet is the way to save a file ("Save to Files"); elsewhere the PDF downloads.
+  function savePDF(y, m, preferShare) {
+    if (!window.buildReportPDF || !window.jspdf) { toast("Getting the PDF ready, try again in a moment"); loadPDF().catch(function () { toast("Couldn't load the PDF maker. Check your connection."); }); return; }
+    var file;
+    try { file = reportFile(y, m); } catch (e) { toast("Couldn't make the PDF: " + e.message); return; }
+    var touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    if ((preferShare || touch) && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: file.name.replace(/\.pdf$/, "") }).catch(function (e) { if (e && e.name !== "AbortError") download(file); });
+    } else download(file);
+  }
   function openReport(y, m) {
     reportMonth = [y, m];
+    loadPDF().catch(function () {});
     $("sheet-title").textContent = monthTitle(y, m);
     $("paper").innerHTML = reportHTML(y, m);
-    $("print-report").addEventListener("click", function () { window.print(); });
+    $("print-report").addEventListener("click", function () { savePDF(y, m, false); });
     $("sheet").hidden = false;
     document.body.style.overflow = "hidden";
   }
@@ -267,6 +306,9 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("sheet").hidden) closeReport(); });
   $("sheet-share").addEventListener("click", function () {
     var y = reportMonth[0], m = reportMonth[1], ds = monthDays(y, m), st = stats(ds, y, m);
+    if (window.buildReportPDF && window.jspdf && navigator.canShare) {
+      try { var f = reportFile(y, m); if (navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: f.name.replace(/\.pdf$/, "") }).catch(function () {}); return; } } catch (_) {}
+    }
     var text = "Mood report " + monthTitle(y, m) + "\n" + st.n + " of " + st.dim + " days rated, average " + st.avg.toFixed(1) +
       "\nBalanced days (4 to 6): " + st.bal + ", high days (7+): " + st.high + ", low days (3 or less): " + st.low + "\n\n" +
       ds.map(function (p) { return p.d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) + ": " + p.r + " (" + phaseOf(p.r).name + ")" + (p.n ? " - " + p.n : ""); }).join("\n");
