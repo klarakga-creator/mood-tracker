@@ -6,16 +6,17 @@
 (function (root) {
   "use strict";
 
+  // c: fill colour, t: text colour on white, on: text colour on top of the fill
   var PHASES = [
-    { name: "Mania", lo: 9, hi: 10, c: "#FF3B30" },
-    { name: "Hypomania", lo: 7, hi: 8, c: "#FF9500" },
-    { name: "Balanced Mood", lo: 4, hi: 6, c: "#34C759", band: ["Balanced Mood"] },
-    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#007AFF", band: ["Mild to Moderate", "Depression"] },
-    { name: "Severe Depression", lo: 0, hi: 1, c: "#5856D6" }
+    { name: "Mania", lo: 9, hi: 10, c: "#DB6E4A", t: "#C2532F", on: "#FFFFFF" },
+    { name: "Hypomania", lo: 7, hi: 8, c: "#F1CD4F", t: "#A3801A", on: "#242424" },
+    { name: "Balanced Mood", lo: 4, hi: 6, c: "#86A795", t: "#557A66", on: "#242424", band: ["Balanced Mood"] },
+    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#8EAFD4", t: "#4C74A3", on: "#242424", band: ["Mild to Moderate", "Depression"] },
+    { name: "Severe Depression", lo: 0, hi: 1, c: "#242424", t: "#242424", on: "#FFFFFF" }
   ];
   function phaseOf(v) { for (var i = 0; i < PHASES.length; i++) if (v >= PHASES[i].lo && v <= PHASES[i].hi) return PHASES[i]; return PHASES[2]; }
 
-  var INK = "#1C1C1E", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
+  var INK = "#242424", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   var MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -75,7 +76,7 @@
         return;
       }
       fill(phaseOf(rating).c); doc.circle(x, y, r, "F");
-      font(size, "bold", "#FFFFFF"); doc.text(String(rating), x, y + size * 0.125, { align: "center" });
+      font(size, "bold", phaseOf(rating).on); doc.text(String(rating), x, y + size * 0.125, { align: "center" });
     }
 
     // ================= Page 1: the graph =================
@@ -97,63 +98,53 @@
     });
     stroke(LINE, 0.3); doc.line(L, 45, R, 45);
 
-    // Chart card
+    // Chart card: squared grid, one row per rating, big circles joined by a thin line
     var bx = L, by = 51, bh = 134;
-    fill("#FAFAFC"); stroke("#EEEEF2", 0.3); doc.roundedRect(bx, by, W, bh, 5, 5, "FD");
+    fill("#EFEFED"); doc.roundedRect(bx, by, W, bh, 5, 5, "F");
     font(13, "bold", INK); doc.text("Mood over the month", bx + 6, by + 10);
-    font(8.5, "normal", FAINT); doc.text("Each dot is one day's rating. The shaded bands show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
-    var px0 = L + 12, px1 = R - 35, py0 = by + 23, py1 = by + bh - 13;
+    font(8.5, "normal", MUTED); doc.text("Each circle is one day's rating. The bars on the right show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
+    var px0 = L + 12, py0 = by + 24, py1 = by + bh - 13, cell = (py1 - py0) / 10;
+    var cols = Math.floor((R - 37 - px0) / cell), px1 = px0 + cols * cell;
     function X(day) { return px0 + (day - 0.5) / dim * (px1 - px0); }
     function Yv(v) { return py0 + (10 - v) / 10 * (py1 - py0); }
+    fill("#F7F7F5"); doc.rect(px0, py0, px1 - px0, py1 - py0, "F");
+    stroke("#D3D3D0", 0.25);
+    for (var gi = 0; gi <= cols; gi++) doc.line(px0 + gi * cell, py0, px0 + gi * cell, py1);
+    for (var v = 0; v <= 10; v++) {
+      doc.line(px0, Yv(v), px1, Yv(v));
+      if (v % 2 === 0) { font(7.5, "normal", FAINT); doc.text(String(v), px0 - 3, Yv(v) + 1.1, { align: "right" }); }
+    }
     PHASES.forEach(function (p) {
       var top = Yv(Math.min(10, p.hi + 0.5)), bot = Yv(Math.max(0, p.lo - 0.5));
-      fill(tint(p.c, p.lo === 4 ? 0.12 : 0.07)); doc.rect(px0, top, px1 - px0, bot - top, "F");
       fill(p.c); doc.roundedRect(px1 + 2.5, top + 1, 0.9, bot - top - 2, 0.45, 0.45, "F");
       var lines = p.band || [p.name];
-      font(7.5, "bold", p.c);
+      font(7.5, "bold", p.t);
       lines.forEach(function (t, i) { doc.text(t, px1 + 5, (top + bot) / 2 + 1 - (lines.length - 1) * 1.6 + i * 3.2); });
     });
-    for (var v = 0; v <= 10; v += 2) {
-      stroke("#E3E3E8", 0.2); doc.line(px0, Yv(v), px1, Yv(v));
-      font(7.5, "normal", FAINT); doc.text(String(v), px0 - 3, Yv(v) + 1.1, { align: "right" });
-    }
     for (d = 1; d <= dim; d++) {
       var lab = d === 1 || d % 5 === 0;
-      font(lab ? 7 : 7, "normal", lab ? FAINT : "#C7C7CC"); doc.text(lab ? String(d) : "·", X(d), py1 + 6, { align: "center" });
+      font(7, "normal", lab ? FAINT : "#C7C7CC"); doc.text(lab ? String(d) : "\u00B7", X(d), py1 + 6, { align: "center" });
     }
     if (!n) {
       font(11, "normal", FAINT); doc.text("No days rated this month", (px0 + px1) / 2, (py0 + py1) / 2, { align: "center" });
     } else {
-      // Dashed bridge over single missing days, smooth line through the rest
-      doc.setLineCap("round");
-      for (d = 2; d < dim; d++) if (!byDay[d] && byDay[d - 1] && byDay[d + 1]) {
-        stroke("#B9B9BE", 0.45); dash([1, 1.4]); doc.line(X(d - 1), Yv(byDay[d - 1].rating), X(d + 1), Yv(byDay[d + 1].rating)); dash();
+      var rad = Math.min(cell * 0.3, 2.6);
+      days.forEach(function (p) { fill(phaseOf(p.rating).c); doc.circle(X(p.day), Yv(p.rating), rad, "F"); });
+      stroke("#8A8A8A", 0.4); dash([0.1, 1.3]); doc.setLineCap("round"); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
+      // Thin straight line through the centres, dashed over single missing days
+      stroke(INK, 0.3); doc.setLineJoin("round");
+      for (d = 1; d < dim; d++) {
+        if (byDay[d] && byDay[d + 1]) doc.line(X(d), Yv(byDay[d].rating), X(d + 1), Yv(byDay[d + 1].rating));
+        else if (byDay[d] && !byDay[d + 1] && byDay[d + 2]) { dash([0.8, 0.9]); doc.line(X(d), Yv(byDay[d].rating), X(d + 2), Yv(byDay[d + 2].rating)); dash(); }
       }
-      var segs = [], seg = [];
-      for (d = 1; d <= dim; d++) { if (byDay[d]) seg.push([X(d), Yv(byDay[d].rating)]); else { if (seg.length) segs.push(seg); seg = []; } }
-      if (seg.length) segs.push(seg);
-      stroke("#8F8F92", 0.75); doc.setLineJoin("round");
-      segs.forEach(function (pts) {
-        if (pts.length < 2) return;
-        doc.moveTo(pts[0][0], pts[0][1]);
-        for (var i = 0; i < pts.length - 1; i++) {
-          var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2, k = 0.16;
-          var lo = Math.min(p1[1], p2[1]), hi = Math.max(p1[1], p2[1]);
-          function cl(q) { return Math.min(Math.max(q, lo), hi); }
-          doc.curveTo(p1[0] + (p2[0] - p0[0]) * k, cl(p1[1] + (p2[1] - p0[1]) * k), p2[0] - (p3[0] - p1[0]) * k, cl(p2[1] - (p3[1] - p1[1]) * k), p2[0], p2[1]);
-        }
-        doc.stroke();
-      });
-      stroke("#9C9CA0", 0.5); dash([0.1, 1.4]); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
-      days.forEach(function (p) { fill(phaseOf(p.rating).c); stroke("#FFFFFF", 0.4); doc.circle(X(p.day), Yv(p.rating), 1.25, "FD"); });
 
       // Callouts on the highest and lowest day
       function short(s) { return s.length > 48 ? s.slice(0, 46).replace(/\s+\S*$/, "") + "…" : s; }
       function callout(p, label, up) {
         var x = Math.min(Math.max(X(p.day), px0 + 26), px1 - 26), cy = Yv(p.rating), g = up ? -1 : 1;
         var hasNote = !!p.note, h = hasNote ? 7 : 3.5;
-        var tTop = up ? cy - 7 - h : cy + 7;
-        stroke("#B4B4B8", 0.25); doc.line(X(p.day), cy + g * 2.6, X(p.day), up ? tTop + h + 0.8 : tTop - 0.8);
+        var tTop = up ? cy - rad - 6 - h : cy + rad + 6;
+        stroke("#B4B4B8", 0.25); doc.line(X(p.day), cy + g * (rad + 0.8), X(p.day), up ? tTop + h + 0.8 : tTop - 0.8);
         font(7.5, "bold", INK2); doc.text(label, x, tTop + 2.6, { align: "center" });
         if (hasNote) { font(7.5, "normal", MUTED); doc.text("“" + short(p.note) + "”", x, tTop + 6.4, { align: "center" }); }
       }
@@ -235,7 +226,7 @@
         continue;
       }
       var p = phaseOf(e.rating);
-      fill(tint(p.c, 0.08)); stroke(tint(p.c, 0.22), 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "FD");
+      fill(tint(p.c, 0.15)); stroke(tint(p.c, 0.32), 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "FD");
       font(9, "bold", INK); doc.text(String(d), x + 2.2, y + 5.6);
       badge(x + cw - 4.4, y + 4.5, 2.5, e.rating, 8);
       if (e.note) {
