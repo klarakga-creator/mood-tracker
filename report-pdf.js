@@ -83,7 +83,7 @@
     font(30, "bold", INK); doc.text(title, L, 38);
 
     // Three key numbers, top right
-    var stats3 = [[n ? avg.toFixed(1) : "-", "", "average mood"], [String(n), " / " + dim, "days rated"],
+    var stats3 = [[n ? avg.toFixed(1) : "-", "", "average mood"],
       [n ? Math.min.apply(null, rs) + "\u2013" + Math.max.apply(null, rs) : "-", "", "lowest to highest"]];
     var sx3 = R;
     stats3.slice().reverse().forEach(function (st, i) {
@@ -92,7 +92,7 @@
       font(20, "bold", INK); doc.text(st[0], x, 33.5);
       if (st[1]) { font(11, "normal", FAINT); doc.text(st[1], x + w1, 33.5); }
       font(8.5, "normal", FAINT); doc.text(st[2], x, 38.5);
-      if (i < 2) { stroke(LINE, 0.3); doc.line(x - 6, 27, x - 6, 39.5); }
+      if (i < stats3.length - 1) { stroke(LINE, 0.3); doc.line(x - 6, 27, x - 6, 39.5); }
       sx3 = x - 12;
     });
     stroke(LINE, 0.3); doc.line(L, 45, R, 45);
