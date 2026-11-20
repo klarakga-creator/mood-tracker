@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.1.3";
+  var VERSION = "1.2.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -63,7 +63,7 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var toastTimer;
-  function toast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 1800); }
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, Math.max(1800, msg.length * 70)); }
 
   // ---------- Shared rendering (Month tab + report) ----------
   function stats(ds, y, m) {

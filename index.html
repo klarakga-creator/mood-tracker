@@ -70,14 +70,16 @@
             <div class="group">
               <label class="cell"><span>Daily reminder</span><span class="toggle"><input type="checkbox" id="s-daily"><span></span></span></label>
               <label class="cell" id="time-cell"><span>Time</span><input class="pill" type="time" id="s-time" value="20:00"></label>
+              <button class="cell link" id="test-push" type="button" hidden>Send a test notification</button>
             </div>
-            <div class="group-f" id="push-note">Reminders start working once sync is set up.</div>
+            <div class="group-f" id="push-note">Sign in to get reminders.</div>
           </div>
           <div>
             <div class="group-h">Monthly report</div>
             <div class="group">
               <label class="cell"><span>Email it on the 1st</span><span class="toggle"><input type="checkbox" id="s-monthly"><span></span></span></label>
               <div class="cell"><input type="email" id="s-email" placeholder="Email for reports" aria-label="Email for reports" autocomplete="email"></div>
+              <button class="cell link" id="test-report" type="button" hidden>Email me a test report now</button>
             </div>
             <div class="group-f">On the 1st of each month, last month's report is emailed to this address. You can also open it any time from the Month tab.</div>
           </div>
@@ -144,5 +146,6 @@
   <script src="vendor/supabase.js"></script>
   <script src="app.js"></script>
   <script src="sync.js"></script>
+  <script src="push.js"></script>
 </body>
 </html>
