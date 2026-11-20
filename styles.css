@@ -112,11 +112,11 @@ button { font: inherit; color: inherit; }
 
 .note-card { display: grid; gap: 10px; padding: 14px; border-radius: 22px; background: var(--tile); }
 .note-head { display: flex; align-items: center; gap: 8px; padding: 2px 14px 0; }
-.note-ico { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, var(--label) 45%, transparent); display: grid; place-items: center; }
+.note-ico { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, var(--label) 75%, transparent); display: grid; place-items: center; }
 .note-sub { font-size: 15px; color: var(--label2); }
 .note-count { margin-left: auto; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
-.note { display: block; width: 100%; min-height: 112px; resize: none; overflow: hidden; font: inherit; font-size: 16px; color: var(--label); border: 0; border-radius: 14px; padding: 8px 14px;
-  line-height: 28px; background: repeating-linear-gradient(transparent 0 27px, var(--sep) 27px 28px) content-box, var(--bg); background-attachment: local, scroll; }
+.note { display: block; width: 100%; min-height: 120px; resize: none; overflow: hidden; font: inherit; font-size: 15px; color: var(--label); border: 0; border-radius: 14px; padding: 8px 14px;
+  line-height: 26px; background: repeating-linear-gradient(transparent 0 25px, color-mix(in srgb, var(--label) 28%, transparent) 25px 26px) content-box, var(--bg); background-attachment: local, scroll; }
 .note::placeholder { color: var(--label2); }
 .note:focus { outline: none; }
 .note-card:focus-within { box-shadow: 0 0 0 2px var(--label); }

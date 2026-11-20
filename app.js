@@ -166,7 +166,7 @@
   grid.appendChild(groups);
 
   // Note: grows as you type, with a character count.
-  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 112) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
+  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 120) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
   noteEl.addEventListener("input", growNote);
 
   function setDay(d) {
