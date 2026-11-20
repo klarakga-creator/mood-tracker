@@ -480,6 +480,7 @@
 
   // ---------- Start ----------
   setDay(today());
+  (function () { var sp = $("splash"); if (!sp) return; sp.classList.add("gone"); setTimeout(function () { sp.remove(); }, 400); })();
   // Roll over to the new day if the app stays open past midnight.
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && savedRating === null && selected === null && keyOf(day) !== keyOf(today())) setDay(today());
