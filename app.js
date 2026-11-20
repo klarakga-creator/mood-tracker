@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.7.0";
+  var VERSION = "1.8.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -182,6 +182,7 @@
         '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></button></div>' +
         '<div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>';
     }
+    renderStreak();
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
     var label = savedRating === null ? "Save" : (changed ? "Update" : "Saved");
@@ -265,6 +266,30 @@
   $("info").addEventListener("click", function (e) { if (e.target === $("info")) closeInfo(); });
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("info").hidden) closeInfo(); });
   $("level-slot").addEventListener("click", function (e) { if (e.target.closest(".more") && selected !== null) openInfo(selected); });
+
+  // ---------- 4+ days in a row at 3 or lower, or 7 or higher ----------
+  function streak() {
+    var d = today(), e = entries[keyOf(d)];
+    if (!e || e.deleted) d = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    var dir = 0, n = 0, last = null;
+    for (;;) {
+      e = entries[keyOf(d)];
+      if (!e || e.deleted) break;
+      var s = e.rating >= 7 ? 1 : e.rating <= 3 ? -1 : 0;
+      if (!s || (dir && s !== dir)) break;
+      dir = s; n++; if (last === null) last = e.rating;
+      d = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1);
+    }
+    return n >= 4 ? { dir: dir, n: n, last: last } : null;
+  }
+  function renderStreak() {
+    var st = streak(), slot = $("streak-slot");
+    if (!st) { slot.innerHTML = ""; return; }
+    slot.innerHTML = '<button type="button" class="streak" style="--c:' + col(st.last) + ';--on:' + on(st.last) + '">' +
+      '<span class="streak-n">' + st.n + '</span><span class="streak-t">' + "days in a row at " + (st.dir > 0 ? "7 or higher" : "3 or lower") + "</span>" +
+      '<span class="streak-more">Tips</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>';
+    slot.firstChild.addEventListener("click", function () { openInfo(st.last); });
+  }
 
   // ---------- Month ----------
   var vy = today().getFullYear(), vm = today().getMonth();
