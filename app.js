@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.6.1";
+  var VERSION = "1.6.2";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -150,7 +150,7 @@
     b.type = "button"; b.className = "rate"; b.textContent = v;
     b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
-    b.addEventListener("click", function () { selected = v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
+    b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     grid.appendChild(b);
   });
 
