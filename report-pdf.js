@@ -48,7 +48,6 @@
     for (var d = 1; d <= dim; d++) if (byDay[d]) days.push(byDay[d]);
     var rs = days.map(function (x) { return x.rating; }), n = rs.length;
     var avg = n ? rs.reduce(function (a, b) { return a + b; }, 0) / n : 0;
-    var sd = n ? Math.sqrt(rs.reduce(function (a, b) { return a + (b - avg) * (b - avg); }, 0) / n) : 0;
     function count(f) { return rs.filter(f).length; }
     function inPhase(p) { return count(function (v) { return v >= p.lo && v <= p.hi; }); }
     function weekday(day) { return new Date(Date.UTC(Y, M - 1, day)).getUTCDay(); }
@@ -82,26 +81,19 @@
     font(9, "bold", FAINT); doc.setCharSpace(0.6); doc.text("MOOD REPORT", L, 26); doc.setCharSpace(0);
     font(30, "bold", INK); doc.text(title, L, 38);
 
-    // Summary card, top right
-    var mostP = PHASES.slice().sort(function (a, b) { return inPhase(b) - inPhase(a); })[0];
-    var avgP = phaseOf(Math.round(avg));
-    var line2 = n
-      ? [[n + " of " + dim, "bold", INK], [" days rated  ·  range ", "normal", MUTED], [Math.min.apply(null, rs) + " to " + Math.max.apply(null, rs), "bold", INK]]
-      : [["No days rated this month", "normal", MUTED]];
-    var tag = n ? "Mostly " + mostP.name : "";
-    font(8, "bold"); var tagW = tag ? tw(tag) + 5 : 0;
-    var textW = Math.max(runsWidth(line2, 9), tagW);
-    var bigW = 22, cardW = bigW + 5 + textW + 6, cx0 = R - cardW, cy0 = 17, cardH = 23;
-    fill("#F5F5F8"); doc.roundedRect(cx0, cy0, cardW, cardH, 4, 4, "F");
-    font(25, "bold", n ? avgP.c : FAINTER); doc.text(n ? avg.toFixed(1) : "-", cx0 + bigW / 2 + 2, cy0 + 13, { align: "center" });
-    font(8, "normal", FAINT); doc.text("average", cx0 + bigW / 2 + 2, cy0 + 18.5, { align: "center" });
-    stroke("#E2E2E7", 0.3); doc.line(cx0 + bigW + 2, cy0 + 4, cx0 + bigW + 2, cy0 + cardH - 4);
-    var tx = cx0 + bigW + 7;
-    if (tag) {
-      fill(tint(mostP.c, 0.16)); doc.roundedRect(tx, cy0 + 4.2, tagW, 5.4, 2.7, 2.7, "F");
-      font(8, "bold", mostP.c); doc.text(tag, tx + 2.5, cy0 + 8);
-      runs(line2, tx, cy0 + 16, 9);
-    } else runs(line2, tx, cy0 + 13.5, 9);
+    // Three key numbers, top right
+    var stats3 = [[n ? avg.toFixed(1) : "-", "", "average mood"], [String(n), " / " + dim, "days rated"],
+      [n ? Math.min.apply(null, rs) + "\u2013" + Math.max.apply(null, rs) : "-", "", "lowest to highest"]];
+    var sx3 = R;
+    stats3.slice().reverse().forEach(function (st, i) {
+      font(20, "bold"); var w1 = tw(st[0]); font(11, "normal"); var w2 = st[1] ? tw(st[1]) : 0;
+      font(8.5, "normal"); var w = Math.max(w1 + w2, tw(st[2])), x = sx3 - w;
+      font(20, "bold", INK); doc.text(st[0], x, 33.5);
+      if (st[1]) { font(11, "normal", FAINT); doc.text(st[1], x + w1, 33.5); }
+      font(8.5, "normal", FAINT); doc.text(st[2], x, 38.5);
+      if (i < 2) { stroke(LINE, 0.3); doc.line(x - 6, 27, x - 6, 39.5); }
+      sx3 = x - 12;
+    });
     stroke(LINE, 0.3); doc.line(L, 45, R, 45);
 
     // Chart card
@@ -152,7 +144,7 @@
         doc.stroke();
       });
       stroke("#9C9CA0", 0.5); dash([0.1, 1.4]); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
-      days.forEach(function (p) { fill(phaseOf(p.rating).c); stroke("#FFFFFF", 0.6); doc.circle(X(p.day), Yv(p.rating), 1.85, "FD"); });
+      days.forEach(function (p) { fill(phaseOf(p.rating).c); stroke("#FFFFFF", 0.4); doc.circle(X(p.day), Yv(p.rating), 1.25, "FD"); });
 
       // Callouts on the highest and lowest day
       function short(s) { return s.length > 48 ? s.slice(0, 46).replace(/\s+\S*$/, "") + "…" : s; }
@@ -173,12 +165,11 @@
       }
     }
 
-    // Four tiles
+    // Three tiles
     var tiles = [["Balanced days", String(count(function (v) { return v >= 4 && v <= 6; })), "rated 4 to 6"],
       ["High days", String(count(function (v) { return v >= 7; })), "rated 7 or more"],
-      ["Low days", String(count(function (v) { return v <= 3; })), "rated 3 or less"],
-      ["Variability", n ? sd.toFixed(1) : "-", "lower means steadier"]];
-    var tg = 3, twd = (W - tg * 3) / 4, ty = 192;
+      ["Low days", String(count(function (v) { return v <= 3; })), "rated 3 or less"]];
+    var tg = 3, twd = (W - tg * 2) / 3, ty = 192;
     tiles.forEach(function (t, i) {
       var x = L + i * (twd + tg);
       fill("#F5F5F8"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
