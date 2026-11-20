@@ -255,7 +255,7 @@
     }
     function dayCircle(x, y, day, color) {
       var cx = x + w0 - dr, cy = y + dr * 0.85;
-      stroke(color, 0.3); doc.circle(cx, cy, dr, "S");
+      fill("#ECE7E0"); doc.circle(cx, cy, dr, "F");
       font(8, "bold", color); doc.text(String(day), cx, cy + 1, { align: "center" });
     }
     var w0 = cw;
