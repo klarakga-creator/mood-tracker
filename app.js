@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.6.2";
+  var VERSION = "1.7.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -178,8 +178,8 @@
       var dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
       var arrow = { up: "M7 17L17 7M8.5 7H17v8.5", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 8.5V17H8.5" }[dir];
       slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
-        '<div class="level-top"><span class="level-big">' + selected + '</span><span class="ring" aria-hidden="true">' +
-        '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></span></div>' +
+        '<div class="level-top"><span class="level-big">' + selected + '</span><button type="button" class="ring more" aria-label="More about this mood">' +
+        '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></button></div>' +
         '<div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>';
     }
     var changed = selected !== savedRating || noteEl.value !== savedNote;
@@ -207,6 +207,64 @@
     entries[keyOf(day)] = { deleted: true, updatedAt: new Date().toISOString() };
     saveEntries(); setDay(day); toast("Deleted");
   });
+
+  // ---------- More about a mood (Bipolar UK Mood Scale; tips from Bipolar UK, NHS and Mind) ----------
+  var SRC = {
+    buk: ["Bipolar UK: Mood Scale", "https://www.bipolaruk.org/get-support/track-your-mood/mood-scale/"],
+    nhs: ["NHS: Bipolar disorder", "https://www.nhs.uk/mental-health/conditions/bipolar-disorder/"],
+    mind: ["Mind: Bipolar self-care", "https://www.mind.org.uk/information-support/types-of-mental-health-problems/bipolar-disorder/self-care/"],
+    moods: ["Mind: Bipolar moods", "https://www.mind.org.uk/information-support/types-of-mental-health-problems/bipolar-disorder/bipolar-moods-symptoms/"]
+  };
+  var INFO = {
+    "Mania": {
+      about: "9 and 10 are the top of the scale. Mania usually lasts a week or more and can make everyday life hard to manage. It can include losing touch with reality.",
+      watch: ["Little or no sleep", "Racing thoughts and fast speech", "Risky or impulsive choices, like big spending"],
+      help: ["Let your doctor or care team know. Severe mania often needs medical treatment.", "Follow the plan you made while you were well.", "Let the people close to you help. They can also help you piece together what happened afterwards.", "Avoid alcohol and recreational drugs."],
+      src: ["buk", "moods", "nhs", "mind"]
+    },
+    "Hypomania": {
+      about: "7 and 8 are on the high side of the scale. Hypomania is a milder form of mania that lasts 4 days or more. It can feel good, but it's worth watching.",
+      watch: ["Needing less sleep", "Racing thoughts", "Feeling very sociable or talkative", "Impulsive spending"],
+      help: ["Keep to your routine for meals, sleep and medication. It can help you feel calmer.", "Exercise can help use up extra energy.", "Cut back on caffeine and alcohol, and avoid recreational drugs.", "Tell someone you trust, so they can help you notice if it keeps rising."],
+      src: ["buk", "nhs", "mind", "moods"]
+    },
+    "Balanced Mood": {
+      about: "4 to 6 is the middle of the scale, the range people without a mood disorder usually sit in. It's a good time to look after your routine and plan ahead.",
+      watch: ["Changes in sleep", "Changes in appetite or eating", "Changes in how you behave or spend time"],
+      help: ["Keep a steady routine for meals, sleep, relaxation and taking medication at the same time each day.", "Learn your triggers, like stress, lack of sleep, busy periods or big life events.", "Share your early warning signs with family and friends.", "While you're well, make a plan for how you'd like to be supported if you become unwell.", "Go easy on caffeine and alcohol, and avoid very long hours where you can."],
+      src: ["buk", "mind", "nhs"]
+    },
+    "Mild to Moderate Depression": {
+      about: "2 and 3 are on the low side of the scale. Everything can feel slower and harder, and that's part of the low mood, not a failing.",
+      watch: ["Sleeping a lot more or less", "Losing your appetite", "Wanting to be alone"],
+      help: ["Keep to a simple routine. It can help with motivation when your mood is low.", "Try gentle exercise, like a walk, yoga or swimming.", "Get enough sleep and eat regular, healthy meals.", "Keep taking medication as prescribed, and don't stop without your doctor's advice.", "Tell the people close to you what helps. Talking therapy, such as CBT, can also help."],
+      src: ["buk", "mind", "nhs"]
+    },
+    "Severe Depression": {
+      about: "0 and 1 are the bottom of the scale. Severe depression is serious and may need extra treatment, so this is a time to involve your doctor or care team.",
+      watch: ["Hardly moving or doing anything", "Feeling hopeless or guilty", "Finding it very hard to look after yourself"],
+      help: ["Contact your doctor or care team and let them know how you're doing.", "Follow the plan you made while you were well.", "Let someone close to you know. They can help you get support.", "Keep taking medication as prescribed."],
+      src: ["buk", "moods", "nhs", "mind"]
+    }
+  };
+  function list(a) { return "<ul>" + a.map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>"; }
+  function openInfo(v) {
+    var p = phaseOf(v), d = INFO[p.name];
+    $("info-title").textContent = p.name;
+    $("info-body").innerHTML =
+      '<div class="info-hero" style="--c:' + col(v) + ';--on:' + on(v) + '"><span class="info-range">' + p.lo + "–" + p.hi + '</span><div class="phase">' + p.name + "</div><p>" + esc(d.about) + "</p></div>" +
+      '<section class="info-card"><h3>Signs to notice</h3>' + list(d.watch) + "</section>" +
+      '<section class="info-card"><h3>Things that can help</h3>' + list(d.help) + "</section>" +
+      '<section class="info-card info-src"><h3>Sources</h3>' + d.src.map(function (k) { return '<a href="' + SRC[k][1] + '" target="_blank" rel="noopener">' + SRC[k][0] + "</a>"; }).join("") +
+      '<p class="caption">General information, not advice from your own doctor. Your scale is the Bipolar UK Mood Scale.</p></section>';
+    $("info").hidden = false; document.body.style.overflow = "hidden";
+    $("info-body").scrollTop = 0;
+  }
+  function closeInfo() { $("info").hidden = true; document.body.style.overflow = ""; }
+  $("info-done").addEventListener("click", closeInfo);
+  $("info").addEventListener("click", function (e) { if (e.target === $("info")) closeInfo(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !$("info").hidden) closeInfo(); });
+  $("level-slot").addEventListener("click", function (e) { if (e.target.closest(".more") && selected !== null) openInfo(selected); });
 
   // ---------- Month ----------
   var vy = today().getFullYear(), vm = today().getMonth();
