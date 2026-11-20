@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.9.0";
+  var VERSION = "1.10.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -154,16 +154,22 @@
     b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     rateBtns.push(b);
   });
-  // Rating: dots on a line, with the phase names underneath.
-  var bar = document.createElement("div"); bar.className = "rate-bar";
-  rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
-  var groups = document.createElement("div"); groups.className = "rate-groups";
-  PHASES.slice().reverse().forEach(function (p) {
-    var x = document.createElement("span"); x.style.gridColumn = "span " + (p.hi - p.lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
-    x.textContent = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" }[p.name];
-    groups.appendChild(x);
+  // Rating: dots on a line in rows, with the phase names underneath each row.
+  var ROWS = (location.search.match(/rows=([23])/) || [])[1] === "3" ? [[0, 3], [4, 6], [7, 10]] : [[0, 5], [6, 10]];
+  var SHORT = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" };
+  grid.classList.add("rows-" + ROWS.length);
+  ROWS.forEach(function (r) {
+    var n = r[1] - r[0] + 1, row = document.createElement("div"); row.className = "rate-line"; row.style.setProperty("--n", n);
+    var bar = document.createElement("div"); bar.className = "rate-bar";
+    for (var v = r[0]; v <= r[1]; v++) bar.appendChild(rateBtns[v]);
+    var groups = document.createElement("div"); groups.className = "rate-groups";
+    PHASES.slice().reverse().forEach(function (p) {
+      var lo = Math.max(p.lo, r[0]), hi = Math.min(p.hi, r[1]); if (lo > hi) return;
+      var x = document.createElement("span"); x.style.gridColumn = "span " + (hi - lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
+      x.textContent = SHORT[p.name]; groups.appendChild(x);
+    });
+    row.appendChild(bar); row.appendChild(groups); grid.appendChild(row);
   });
-  grid.appendChild(groups);
 
   // Note: grows as you type, with a character count.
   function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 120) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
@@ -185,6 +191,7 @@
 
   function renderToday() {
     grid.classList.toggle("picked", tapped && selected !== null);
+    noteEl.parentNode.hidden = selected === null;
     rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });

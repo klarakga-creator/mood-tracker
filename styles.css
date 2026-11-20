@@ -68,20 +68,21 @@ button { font: inherit; color: inherit; }
 .day-pick input { position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; opacity: 0; border: 0; margin: 0; padding: 0; cursor: pointer; font-size: 16px; }
 .day-pick:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 50%; }
 
-.rate-grid { display: grid; gap: 10px; }
-.rate-bar, .rate-groups { display: grid; grid-template-columns: repeat(11, minmax(0,1fr)); }
-.rate-bar { position: relative; height: 48px; align-items: center; justify-items: center; }
-.rate-bar::before { content: ""; position: absolute; left: calc(100% / 22); right: calc(100% / 22); top: 50%; height: 2px; margin-top: -1px; background: var(--sep); }
-.rate { --c: var(--ph-bal); --on: #fff; position: relative; width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+.rate-grid { display: grid; gap: 14px; }
+.rate-line { --n: 6; display: grid; gap: 8px; width: 100%; max-width: calc(var(--n) * 60px); justify-self: center; }
+.rate-bar, .rate-groups { display: grid; grid-template-columns: repeat(var(--n), minmax(0,1fr)); }
+.rate-bar { position: relative; height: 56px; align-items: center; justify-items: center; }
+.rate-bar::before { content: ""; position: absolute; left: calc(50% / var(--n)); right: calc(50% / var(--n)); top: 50%; height: 2px; margin-top: -1px; background: var(--sep); }
+.rate { --c: var(--ph-bal); --on: #fff; position: relative; width: 42px; height: 42px; padding: 0; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums;
   transition: transform .18s cubic-bezier(.3,1.4,.5,1), background-color .18s, color .18s; }
 .rate::after { content: ""; position: absolute; inset: -8px -3px; }
 .rate-grid.picked .rate { background: var(--tile); color: var(--rate-off); }
-.rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.5); }
+.rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.25); }
 .rate[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--label); }
 .rate-grid.picked .rate[aria-pressed="true"] { box-shadow: none; }
 .rate-groups { column-gap: 4px; }
-.rate-groups span { --c: var(--ph-bal); border-top: 3px solid var(--c); border-radius: 2px; padding-top: 5px; text-align: center; font-size: 11px; font-weight: 700; }
+.rate-groups span { --c: var(--ph-bal); border-top: 3px solid var(--c); border-radius: 2px; padding-top: 5px; text-align: center; font-size: 12px; font-weight: 700; }
 .rate:focus-visible, .btn-prom:focus-visible, .round:focus-visible, .glass-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 .level { --c: var(--ph-bal); --on: #fff; padding: 14px 16px 18px; border-radius: 26px; background: var(--c); color: var(--on); animation: pop .25s ease both; }
