@@ -163,7 +163,7 @@
     dayInput.max = keyOf(today());
     var diff = Math.round((today() - d) / 864e5);
     $("today-title").textContent = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : d.toLocaleDateString("en-GB", { weekday: "long" });
-    $("today-date").textContent = d.toLocaleDateString("en-GB", diff === 0 || diff === 1 ? { weekday: "long", day: "numeric", month: "long" } : { day: "numeric", month: "long", year: "numeric" });
+    $("today-date").textContent = d.toLocaleDateString("en-GB", diff > 1 && d.getFullYear() !== today().getFullYear() ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "long" });
     renderToday();
   }
 
@@ -172,17 +172,16 @@
     Array.prototype.forEach.call(grid.children, function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
-    $("view-today").style.setProperty("--mood", selected === null ? "var(--ph-bal)" : col(selected));
     var slot = $("level-slot");
     if (selected === null) slot.innerHTML = "";
     else {
-      var p = phaseOf(selected), dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
-      var arrow = { up: "M7 17L17 7M9 7h8v8", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 9v8H9" }[dir];
+      var dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
+      var arrow = { up: "M7 17L17 7M8.5 7H17v8.5", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 8.5V17H8.5" }[dir];
       slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
-        '<div class="level-top"><span class="level-num">' + selected + '</span><span class="level-dir" title="' + (dir === "up" ? "Elevated" : dir === "down" ? "Low" : "Balanced") + '">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></span></div>' +
-        '<div class="phase">' + p.name + '</div><p>' + SCALE[selected] + '</p>' +
-        '<span class="level-big" aria-hidden="true">' + selected + '</span></div>';
+        '<div class="level-top"><span class="ring">' + selected + '</span><span class="ring" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></span></div>' +
+        '<div class="level-main"><div><div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>' +
+        '<span class="level-big" aria-hidden="true">' + selected + '</span></div></div>';
     }
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;

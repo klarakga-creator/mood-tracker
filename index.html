@@ -20,17 +20,12 @@
   <main id="app">
     <!-- Today -->
     <section class="view" id="view-today" aria-label="Today">
-      <div class="mood-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
       <div class="content">
         <header class="today-head">
-          <div>
-            <h1 class="large-title" id="today-title">Today</h1>
-            <p class="today-date" id="today-date"></p>
-          </div>
-          <label class="date-pill glass" title="Choose a day">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
-            <span>Change day</span>
-            <input type="date" id="day" aria-label="Day">
+          <h1 class="two-tone"><span id="today-title">Today</span><span class="sub" id="today-date"></span></h1>
+          <label class="day-pick" title="Choose a day">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            <input type="date" id="day" aria-label="Choose a day">
           </label>
         </header>
         <div class="stack">
@@ -40,7 +35,7 @@
           </div>
           <div class="rate-grid" id="rating-grid" role="group" aria-label="Mood rating"></div>
           <div id="level-slot"></div>
-          <div class="glass note-card">
+          <div class="note-card">
             <label class="headline" for="note">Note</label>
             <textarea class="note" id="note" rows="3" placeholder="Sleep, medication, events, anything worth remembering"></textarea>
           </div>
