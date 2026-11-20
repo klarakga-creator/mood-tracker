@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -250,7 +250,14 @@
       '<button class="btn-prom" type="button" id="print-report">Save as PDF</button>';
   }
   // The PDF library is only loaded once a report is opened, so the PDF is ready by the time a button is tapped.
-  var pdfLib = null;
+  var pdfLib = null, pdfFonts = null;
+  function fontB64(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(function (buf) {
+      var b = new Uint8Array(buf), str = "";
+      for (var i = 0; i < b.length; i += 0x8000) str += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+      return btoa(str);
+    });
+  }
   function loadPDF() {
     if (!pdfLib) pdfLib = new Promise(function (ok, fail) {
       var n = 0;
@@ -261,12 +268,15 @@
         document.head.appendChild(s);
       });
     });
+    // DM Sans for the PDF; if it can't load, the PDF falls back to Helvetica.
+    if (!pdfFonts) Promise.all([fontB64("fonts/DMSans-Regular.ttf"), fontB64("fonts/DMSans-Bold.ttf")])
+      .then(function (f) { pdfFonts = { regular: f[0], bold: f[1] }; }, function () {});
     return pdfLib;
   }
   function reportFile(y, m) {
     var t = today();
     var doc = window.buildReportPDF(window.jspdf.jsPDF, {
-      year: y, month: m + 1, today: { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() },
+      year: y, month: m + 1, fonts: pdfFonts, today: { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() },
       days: monthDays(y, m).map(function (p) { return { day: p.d.getDate(), rating: p.r, note: p.n }; })
     });
     var name = "Mood report " + monthTitle(y, m) + ".pdf";
