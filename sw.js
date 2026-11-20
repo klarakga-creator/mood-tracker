@@ -1,6 +1,6 @@
 // Offline support. Files come from the network when online (so updates show up
 // the next time the app opens) and from this cache when offline.
-const CACHE = "mood-v13";
+const CACHE = "mood-v14";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "push.js", "config.js", "vendor/supabase.js", "vendor/jspdf.umd.min.js", "report-pdf.js", "fonts/DMSans-Regular.ttf", "fonts/DMSans-SemiBold.ttf", "fonts/DMSans-Bold.ttf", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 
