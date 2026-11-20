@@ -8,15 +8,15 @@
 
   // c: fill colour, t: text colour on white, on: text colour on top of the fill
   var PHASES = [
-    { name: "Mania", lo: 9, hi: 10, c: "#DB6E4A", t: "#C2532F", on: "#FFFFFF" },
-    { name: "Hypomania", lo: 7, hi: 8, c: "#F1CD4F", t: "#A3801A", on: "#242424" },
-    { name: "Balanced Mood", lo: 4, hi: 6, c: "#86A795", t: "#557A66", on: "#242424", band: ["Balanced Mood"] },
-    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#8EAFD4", t: "#4C74A3", on: "#242424", band: ["Mild to Moderate", "Depression"] },
-    { name: "Severe Depression", lo: 0, hi: 1, c: "#242424", t: "#242424", on: "#FFFFFF" }
+    { name: "Mania", lo: 9, hi: 10, c: "#B44E4B", t: "#9E3F3C", on: "#FFFFFF" },
+    { name: "Hypomania", lo: 7, hi: 8, c: "#D47F50", t: "#B5612F", on: "#FFFFFF" },
+    { name: "Balanced Mood", lo: 4, hi: 6, c: "#3E635C", t: "#3E635C", on: "#FFFFFF", band: ["Balanced Mood"] },
+    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#D8A5C0", t: "#A8628A", on: "#2E2B28", band: ["Mild to Moderate", "Depression"] },
+    { name: "Severe Depression", lo: 0, hi: 1, c: "#848BBA", t: "#5E66A0", on: "#FFFFFF" }
   ];
   function phaseOf(v) { for (var i = 0; i < PHASES.length; i++) if (v >= PHASES[i].lo && v <= PHASES[i].hi) return PHASES[i]; return PHASES[2]; }
 
-  var INK = "#242424", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
+  var INK = "#2E2B28", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   var MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -100,15 +100,15 @@
 
     // Chart card: squared grid, one row per rating, big circles joined by a thin line
     var bx = L, by = 51, bh = 134;
-    fill("#EFEFED"); doc.roundedRect(bx, by, W, bh, 5, 5, "F");
+    fill("#ECE7E0"); doc.roundedRect(bx, by, W, bh, 5, 5, "F");
     font(13, "bold", INK); doc.text("Mood over the month", bx + 6, by + 10);
     font(8.5, "normal", MUTED); doc.text("Each circle is one day's rating. The bars on the right show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
     var px0 = L + 12, py0 = by + 24, py1 = by + bh - 13, cell = (py1 - py0) / 10;
     var cols = Math.floor((R - 37 - px0) / cell), px1 = px0 + cols * cell;
     function X(day) { return px0 + (day - 0.5) / dim * (px1 - px0); }
     function Yv(v) { return py0 + (10 - v) / 10 * (py1 - py0); }
-    fill("#F7F7F5"); doc.rect(px0, py0, px1 - px0, py1 - py0, "F");
-    stroke("#D3D3D0", 0.25);
+    fill("#F6F3EE"); doc.rect(px0, py0, px1 - px0, py1 - py0, "F");
+    stroke("#D6CFC5", 0.25);
     for (var gi = 0; gi <= cols; gi++) doc.line(px0 + gi * cell, py0, px0 + gi * cell, py1);
     for (var v = 0; v <= 10; v++) {
       doc.line(px0, Yv(v), px1, Yv(v));
@@ -165,7 +165,7 @@
     var tg = 3, twd = (W - tg * 3) / 4, ty = 192;
     tiles.forEach(function (t, i) {
       var x = L + i * (twd + tg);
-      fill("#F5F5F8"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
+      fill("#F1EDE7"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
       font(8.5, "normal", MUTED); doc.text(t[0], x + 4, ty + 6);
       font(18, "bold", INK); doc.text(t[1], x + 4, ty + 14);
       font(7.5, "normal", FAINT); doc.text(t[2], x + 4, ty + 18.5);
