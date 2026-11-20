@@ -155,7 +155,7 @@
     rateBtns.push(b);
   });
   // Layout preview switch (?layout=a|b|c|d) - removed once Klara picks one.
-  var LAYOUT = (location.search.match(/layout=([a-d])/) || [])[1] || "";
+  var LAYOUT = (location.search.match(/layout=(c[2-5]|[a-d])/) || [])[1] || "";
   if (LAYOUT) grid.classList.add("lay-" + LAYOUT);
   if (LAYOUT === "b") {
     PHASES.slice().reverse().forEach(function (p) {
@@ -165,11 +165,42 @@
       for (var v = p.lo; v <= p.hi; v++) dots.appendChild(rateBtns[v]);
       row.appendChild(dots); grid.appendChild(row);
     });
-  } else if (LAYOUT === "c") {
+  } else if (LAYOUT.charAt(0) === "c") {
     var bar = document.createElement("div"); bar.className = "rate-bar";
     rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
-    var lab = document.createElement("div"); lab.className = "rate-ends"; lab.innerHTML = "<span>Low</span><span>Balanced</span><span>High</span>"; grid.appendChild(lab);
+    if (LAYOUT === "c") grid.classList.add("lay-c");
+    if (LAYOUT === "c4") {
+      var g = document.createElement("div"); g.className = "rate-groups";
+      PHASES.slice().reverse().forEach(function (p) {
+        var x = document.createElement("span"); x.style.gridColumn = "span " + (p.hi - p.lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
+        x.textContent = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" }[p.name];
+        g.appendChild(x);
+      });
+      grid.appendChild(g);
+    } else { var lab = document.createElement("div"); lab.className = "rate-ends"; lab.innerHTML = "<span>Low</span><span>Balanced</span><span>High</span>"; grid.appendChild(lab); }
   } else rateBtns.forEach(function (b) { grid.appendChild(b); });
+
+  // Note preview switch (?note=1|2)
+  var NOTE = (location.search.match(/note=([12])/) || [])[1] || "";
+  if (NOTE) {
+    var card = noteEl.parentNode; card.classList.add("note-v" + NOTE);
+    if (NOTE === "1") {
+      card.querySelector("label").outerHTML = '<div class="note-head"><label class="headline" for="note">Note</label><span class="muted">Optional</span></div>';
+      var chips = document.createElement("div"); chips.className = "chips";
+      ["Sleep", "Medication", "Exercise", "Social", "Work", "Stress"].forEach(function (t) {
+        var c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = "+ " + t;
+        c.addEventListener("click", function () { var v = noteEl.value.replace(/\s+$/, ""); noteEl.value = (v ? v + "\n" : "") + t + ": "; noteEl.focus(); noteEl.setSelectionRange(noteEl.value.length, noteEl.value.length); renderToday(); grow(); });
+        chips.appendChild(c);
+      });
+      card.appendChild(chips);
+      noteEl.placeholder = "Anything worth remembering about today";
+    } else {
+      card.querySelector("label").outerHTML = '<div class="note-head"><span class="note-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></span><div><label class="headline" for="note">Note</label><div class="muted small">How did today go?</div></div><span class="note-count" id="note-count"></span></div>';
+      noteEl.placeholder = "Sleep, medication, events, anything worth remembering";
+    }
+    var grow = function () { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 84) + "px"; var nc = $("note-count"); if (nc) nc.textContent = noteEl.value.length ? noteEl.value.length + "" : ""; };
+    noteEl.addEventListener("input", grow); setTimeout(grow, 0);
+  }
 
   function setDay(d) {
     day = d; tapped = false;
