@@ -72,7 +72,7 @@ button { font: inherit; color: inherit; }
 .rate { --c: var(--ph-bal); --on: #fff; width: 100%; max-width: 104px; aspect-ratio: 1; border-radius: 50%; border: 0; cursor: pointer;
   background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 40px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
   transition: transform .18s cubic-bezier(.3,1.4,.5,1), background-color .18s, color .18s; }
-.rate-grid.picked .rate { background: color-mix(in srgb, var(--c) 28%, var(--tile)); color: color-mix(in srgb, var(--c) 70%, var(--label)); }
+.rate-grid.picked .rate { background: var(--tile); color: color-mix(in srgb, var(--label) 30%, var(--tile)); }
 .rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.05); }
 .rate:focus-visible, .btn-prom:focus-visible, .round:focus-visible, .glass-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
