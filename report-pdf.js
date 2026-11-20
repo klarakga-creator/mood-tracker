@@ -209,37 +209,45 @@
     ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach(function (t, i) {
       font(7.5, "bold", FAINT); doc.setCharSpace(0.4); doc.text(t.toUpperCase(), L + i * (cw + cg) + 1.5, gy - 3); doc.setCharSpace(0);
     });
-    var cut = [], nsize = 7.6, lh = nsize * 0.3528 * 1.3;
+    // Each day is a block with its rating in large type. The day of the month sits in a
+    // small circle in the top right corner, with the block cut away around it.
+    var cut = [], nsize = 7.4, lh = nsize * 0.3528 * 1.3, dr = 3.3, gapR = dr + 1;
+    function dayCircle(x, y, day, color) {
+      var cx = x + cw - dr, cy = y + dr;
+      fill("#FFFFFF"); doc.circle(cx, cy, gapR, "F");
+      stroke(color, 0.3); doc.circle(cx, cy, dr, "S");
+      font(8, "bold", color); doc.text(String(day), cx, cy + 1, { align: "center" });
+    }
     for (d = 1; d <= dim; d++) {
       var idx = lead + d - 1, x = L + (idx % 7) * (cw + cg), y = gy + Math.floor(idx / 7) * (ch + cg);
       var e = byDay[d];
       if (d > lastDay) {
-        stroke("#EEEEF2", 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "S");
-        font(9, "bold", "#C7C7CC"); doc.text(String(d), x + 2.2, y + 5.6);
+        stroke("#E3DED6", 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "S");
+        dayCircle(x, y, d, "#C9C3BA");
         continue;
       }
       if (!e) {
-        fill("#FFFFFF"); stroke("#D1D1D6", 0.25); dash([0.8, 0.8]); doc.roundedRect(x, y, cw, ch, 3, 3, "FD"); dash();
-        font(9, "bold", FAINTER); doc.text(String(d), x + 2.2, y + 5.6);
-        badge(x + cw - 4.4, y + 4.5, 2.5, null, 8);
-        font(nsize, "normal", FAINTER); doc.text("Not rated", x + 2.2, y + 10.8);
+        stroke("#CFC8BE", 0.25); dash([0.8, 0.8]); doc.roundedRect(x, y, cw, ch, 3, 3, "S"); dash();
+        dayCircle(x, y, d, FAINTER);
+        font(22, "bold", "#CFC8BE"); doc.text("\u2013", x + 2.6, y + 10.5);
+        font(nsize, "normal", FAINTER); doc.text("Not rated", x + 2.6, y + 16);
         continue;
       }
       var p = phaseOf(e.rating);
-      fill(tint(p.c, 0.15)); stroke(tint(p.c, 0.32), 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "FD");
-      font(9, "bold", INK); doc.text(String(d), x + 2.2, y + 5.6);
-      badge(x + cw - 4.4, y + 4.5, 2.5, e.rating, 8);
+      fill(p.c); doc.roundedRect(x, y, cw, ch, 3, 3, "F");
+      dayCircle(x, y, d, INK);
+      font(24, "bold", p.on); doc.text(String(e.rating), x + 2.6, y + 10.8);
       if (e.note) {
-        font(nsize, "normal", INK2);
-        var lines = doc.splitTextToSize(e.note, cw - 4.2), max = Math.floor((ch - 10) / lh);
+        font(nsize, "normal", p.on);
+        var lines = doc.splitTextToSize(e.note, cw - 5), max = Math.floor((ch - 17) / lh);
         if (lines.length > max) {
           lines = lines.slice(0, max);
           var last = lines[max - 1];
-          while (last.length && tw(last + "…") > cw - 4.2) last = last.slice(0, -1);
-          lines[max - 1] = last.replace(/\s+$/, "") + "…";
+          while (last.length && tw(last + "\u2026") > cw - 5) last = last.slice(0, -1);
+          lines[max - 1] = last.replace(/\s+$/, "") + "\u2026";
           cut.push(e);
         }
-        doc.text(lines, x + 2.2, y + 10.8, { lineHeightFactor: 1.3 });
+        doc.text(lines, x + 2.6, y + 16.5, { lineHeightFactor: 1.3 });
       }
     }
     var ky = gy + rows * (ch + cg) + 4, kx = L;
