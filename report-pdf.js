@@ -1,0 +1,298 @@
+/* Monthly mood report as a PDF (A4, two or three pages).
+   The same file runs in the app (browser) and is copied into the email server
+   (supabase/functions/mood/index.ts) between the "report-pdf.js" markers.
+   Usage: buildReportPDF(jsPDF, { year, month, days: [{ day, rating, note }], today? }) returns a jsPDF document.
+   month is 1-12, day is the day of the month, today is { year, month, day } to blank out days still to come. */
+(function (root) {
+  "use strict";
+
+  var PHASES = [
+    { name: "Mania", lo: 9, hi: 10, c: "#FF3B30" },
+    { name: "Hypomania", lo: 7, hi: 8, c: "#FF9500" },
+    { name: "Balanced Mood", lo: 4, hi: 6, c: "#34C759", band: ["Balanced Mood"] },
+    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#007AFF", band: ["Mild to Moderate", "Depression"] },
+    { name: "Severe Depression", lo: 0, hi: 1, c: "#5856D6" }
+  ];
+  function phaseOf(v) { for (var i = 0; i < PHASES.length; i++) if (v >= PHASES[i].lo && v <= PHASES[i].hi) return PHASES[i]; return PHASES[2]; }
+
+  var INK = "#1C1C1E", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
+  var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  var MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  function rgb(hex) { var n = parseInt(hex.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  // Colour mixed with white, so tints need no transparency.
+  function tint(hex, a) { var c = rgb(hex); return c.map(function (v) { return Math.round(255 - (255 - v) * a); }); }
+  // The built-in PDF font covers Western European text; drop anything else (such as emoji).
+  var EXTRA = "“”‘’–—…•€™·";
+  function clean(s) {
+    s = String(s || "");
+    if (s.normalize) s = s.normalize("NFC");
+    var out = "";
+    for (var i = 0; i < s.length; i++) {
+      var ch = s[i], c = s.charCodeAt(i);
+      if (ch === "\n" || ch === "\r" || ch === "\t") out += " ";
+      else if ((c >= 32 && c < 127) || (c >= 160 && c < 256) || EXTRA.indexOf(ch) >= 0) out += ch;
+    }
+    return out.replace(/\s+/g, " ").trim();
+  }
+
+  function buildReportPDF(jsPDF, data) {
+    var Y = data.year, M = data.month, dim = new Date(Date.UTC(Y, M, 0)).getUTCDate();
+    var title = MONTHS[M - 1] + " " + Y;
+    var lastDay = dim;
+    if (data.today && data.today.year === Y && data.today.month === M) lastDay = data.today.day;
+    var byDay = {};
+    (data.days || []).forEach(function (d) { if (d.day >= 1 && d.day <= dim && d.rating != null) byDay[d.day] = { day: d.day, rating: +d.rating, note: clean(d.note) }; });
+    var days = [];
+    for (var d = 1; d <= dim; d++) if (byDay[d]) days.push(byDay[d]);
+    var rs = days.map(function (x) { return x.rating; }), n = rs.length;
+    var avg = n ? rs.reduce(function (a, b) { return a + b; }, 0) / n : 0;
+    var sd = n ? Math.sqrt(rs.reduce(function (a, b) { return a + (b - avg) * (b - avg); }, 0) / n) : 0;
+    function count(f) { return rs.filter(f).length; }
+    function inPhase(p) { return count(function (v) { return v >= p.lo && v <= p.hi; }); }
+    function weekday(day) { return new Date(Date.UTC(Y, M - 1, day)).getUTCDay(); }
+
+    var doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+    doc.setProperties({ title: "Mood report " + title, creator: "Mood Tracker" });
+    var L = 15, R = 195, W = R - L;
+
+    function font(size, weight, color) { doc.setFont("helvetica", weight || "normal"); doc.setFontSize(size); if (color) doc.setTextColor.apply(doc, typeof color === "string" ? rgb(color) : color); }
+    function fill(c) { doc.setFillColor.apply(doc, typeof c === "string" ? rgb(c) : c); }
+    function stroke(c, w) { doc.setDrawColor.apply(doc, typeof c === "string" ? rgb(c) : c); doc.setLineWidth(w || 0.2); }
+    function dash(p) { doc.setLineDashPattern(p || [], 0); }
+    function tw(s) { return doc.getTextWidth(s); }
+    // Draws runs of [text, weight, color] on one line, starting at x.
+    function runs(parts, x, y, size) {
+      parts.forEach(function (p) { font(size, p[1], p[2]); doc.text(p[0], x, y); x += tw(p[0]); });
+      return x;
+    }
+    function runsWidth(parts, size) { var w = 0; parts.forEach(function (p) { font(size, p[1], p[2]); w += tw(p[0]); }); return w; }
+    function badge(x, y, r, rating, size) {
+      if (rating == null) {
+        fill("#FFFFFF"); stroke("#C7C7CC", 0.25); dash([0.6, 0.6]); doc.circle(x, y, r, "FD"); dash();
+        font(size, "bold", FAINTER); doc.text("-", x, y + size * 0.125, { align: "center" });
+        return;
+      }
+      fill(phaseOf(rating).c); doc.circle(x, y, r, "F");
+      font(size, "bold", "#FFFFFF"); doc.text(String(rating), x, y + size * 0.125, { align: "center" });
+    }
+
+    // ================= Page 1: the graph =================
+    font(9, "bold", FAINT); doc.setCharSpace(0.6); doc.text("MOOD REPORT", L, 26); doc.setCharSpace(0);
+    font(30, "bold", INK); doc.text(title, L, 38);
+
+    // Summary card, top right
+    var mostP = PHASES.slice().sort(function (a, b) { return inPhase(b) - inPhase(a); })[0];
+    var avgP = phaseOf(Math.round(avg));
+    var line2 = n
+      ? [[n + " of " + dim, "bold", INK], [" days rated  ·  range ", "normal", MUTED], [Math.min.apply(null, rs) + " to " + Math.max.apply(null, rs), "bold", INK]]
+      : [["No days rated this month", "normal", MUTED]];
+    var tag = n ? "Mostly " + mostP.name : "";
+    font(8, "bold"); var tagW = tag ? tw(tag) + 5 : 0;
+    var textW = Math.max(runsWidth(line2, 9), tagW);
+    var bigW = 22, cardW = bigW + 5 + textW + 6, cx0 = R - cardW, cy0 = 17, cardH = 23;
+    fill("#F5F5F8"); doc.roundedRect(cx0, cy0, cardW, cardH, 4, 4, "F");
+    font(25, "bold", n ? avgP.c : FAINTER); doc.text(n ? avg.toFixed(1) : "-", cx0 + bigW / 2 + 2, cy0 + 13, { align: "center" });
+    font(8, "normal", FAINT); doc.text("average", cx0 + bigW / 2 + 2, cy0 + 18.5, { align: "center" });
+    stroke("#E2E2E7", 0.3); doc.line(cx0 + bigW + 2, cy0 + 4, cx0 + bigW + 2, cy0 + cardH - 4);
+    var tx = cx0 + bigW + 7;
+    if (tag) {
+      fill(tint(mostP.c, 0.16)); doc.roundedRect(tx, cy0 + 4.2, tagW, 5.4, 2.7, 2.7, "F");
+      font(8, "bold", mostP.c); doc.text(tag, tx + 2.5, cy0 + 8);
+      runs(line2, tx, cy0 + 16, 9);
+    } else runs(line2, tx, cy0 + 13.5, 9);
+    stroke(LINE, 0.3); doc.line(L, 45, R, 45);
+
+    // Chart card
+    var bx = L, by = 51, bh = 134;
+    fill("#FAFAFC"); stroke("#EEEEF2", 0.3); doc.roundedRect(bx, by, W, bh, 5, 5, "FD");
+    font(13, "bold", INK); doc.text("Mood over the month", bx + 6, by + 10);
+    font(8.5, "normal", FAINT); doc.text("Each dot is one day's rating. The shaded bands show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
+    var px0 = L + 12, px1 = R - 35, py0 = by + 23, py1 = by + bh - 13;
+    function X(day) { return px0 + (day - 0.5) / dim * (px1 - px0); }
+    function Yv(v) { return py0 + (10 - v) / 10 * (py1 - py0); }
+    PHASES.forEach(function (p) {
+      var top = Yv(Math.min(10, p.hi + 0.5)), bot = Yv(Math.max(0, p.lo - 0.5));
+      fill(tint(p.c, p.lo === 4 ? 0.12 : 0.07)); doc.rect(px0, top, px1 - px0, bot - top, "F");
+      fill(p.c); doc.roundedRect(px1 + 2.5, top + 1, 0.9, bot - top - 2, 0.45, 0.45, "F");
+      var lines = p.band || [p.name];
+      font(7.5, "bold", p.c);
+      lines.forEach(function (t, i) { doc.text(t, px1 + 5, (top + bot) / 2 + 1 - (lines.length - 1) * 1.6 + i * 3.2); });
+    });
+    for (var v = 0; v <= 10; v += 2) {
+      stroke("#E3E3E8", 0.2); doc.line(px0, Yv(v), px1, Yv(v));
+      font(7.5, "normal", FAINT); doc.text(String(v), px0 - 3, Yv(v) + 1.1, { align: "right" });
+    }
+    for (d = 1; d <= dim; d++) {
+      var lab = d === 1 || d % 5 === 0;
+      font(lab ? 7 : 7, "normal", lab ? FAINT : "#C7C7CC"); doc.text(lab ? String(d) : "·", X(d), py1 + 6, { align: "center" });
+    }
+    if (!n) {
+      font(11, "normal", FAINT); doc.text("No days rated this month", (px0 + px1) / 2, (py0 + py1) / 2, { align: "center" });
+    } else {
+      // Dashed bridge over single missing days, smooth line through the rest
+      doc.setLineCap("round");
+      for (d = 2; d < dim; d++) if (!byDay[d] && byDay[d - 1] && byDay[d + 1]) {
+        stroke("#B9B9BE", 0.45); dash([1, 1.4]); doc.line(X(d - 1), Yv(byDay[d - 1].rating), X(d + 1), Yv(byDay[d + 1].rating)); dash();
+      }
+      var segs = [], seg = [];
+      for (d = 1; d <= dim; d++) { if (byDay[d]) seg.push([X(d), Yv(byDay[d].rating)]); else { if (seg.length) segs.push(seg); seg = []; } }
+      if (seg.length) segs.push(seg);
+      stroke("#8F8F92", 0.75); doc.setLineJoin("round");
+      segs.forEach(function (pts) {
+        if (pts.length < 2) return;
+        doc.moveTo(pts[0][0], pts[0][1]);
+        for (var i = 0; i < pts.length - 1; i++) {
+          var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2, k = 0.16;
+          var lo = Math.min(p1[1], p2[1]), hi = Math.max(p1[1], p2[1]);
+          function cl(q) { return Math.min(Math.max(q, lo), hi); }
+          doc.curveTo(p1[0] + (p2[0] - p0[0]) * k, cl(p1[1] + (p2[1] - p0[1]) * k), p2[0] - (p3[0] - p1[0]) * k, cl(p2[1] - (p3[1] - p1[1]) * k), p2[0], p2[1]);
+        }
+        doc.stroke();
+      });
+      stroke("#9C9CA0", 0.5); dash([0.1, 1.4]); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
+      days.forEach(function (p) { fill(phaseOf(p.rating).c); stroke("#FFFFFF", 0.6); doc.circle(X(p.day), Yv(p.rating), 1.85, "FD"); });
+
+      // Callouts on the highest and lowest day
+      function short(s) { return s.length > 48 ? s.slice(0, 46).replace(/\s+\S*$/, "") + "…" : s; }
+      function callout(p, label, up) {
+        var x = Math.min(Math.max(X(p.day), px0 + 26), px1 - 26), cy = Yv(p.rating), g = up ? -1 : 1;
+        var hasNote = !!p.note, h = hasNote ? 7 : 3.5;
+        var tTop = up ? cy - 7 - h : cy + 7;
+        stroke("#B4B4B8", 0.25); doc.line(X(p.day), cy + g * 2.6, X(p.day), up ? tTop + h + 0.8 : tTop - 0.8);
+        font(7.5, "bold", INK2); doc.text(label, x, tTop + 2.6, { align: "center" });
+        if (hasNote) { font(7.5, "normal", MUTED); doc.text("“" + short(p.note) + "”", x, tTop + 6.4, { align: "center" }); }
+      }
+      var hiD = days.reduce(function (a, b) { return b.rating > a.rating ? b : a; });
+      var loD = days.reduce(function (a, b) { return b.rating < a.rating ? b : a; });
+      var dm = function (p) { return p.day + " " + MON3[M - 1]; };
+      if (hiD.rating !== loD.rating) {
+        callout(hiD, "Highest: " + hiD.rating + " on " + dm(hiD), hiD.rating <= 8);
+        callout(loD, "Lowest: " + loD.rating + " on " + dm(loD), loD.rating < 2);
+      }
+    }
+
+    // Four tiles
+    var tiles = [["Balanced days", String(count(function (v) { return v >= 4 && v <= 6; })), "rated 4 to 6"],
+      ["High days", String(count(function (v) { return v >= 7; })), "rated 7 or more"],
+      ["Low days", String(count(function (v) { return v <= 3; })), "rated 3 or less"],
+      ["Variability", n ? sd.toFixed(1) : "-", "lower means steadier"]];
+    var tg = 3, twd = (W - tg * 3) / 4, ty = 192;
+    tiles.forEach(function (t, i) {
+      var x = L + i * (twd + tg);
+      fill("#F5F5F8"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
+      font(8.5, "normal", MUTED); doc.text(t[0], x + 4, ty + 6);
+      font(18, "bold", INK); doc.text(t[1], x + 4, ty + 14);
+      font(7.5, "normal", FAINT); doc.text(t[2], x + 4, ty + 18.5);
+    });
+
+    // Time in each phase
+    font(13, "bold", INK); doc.text("Time in each phase", L, 228);
+    var order = PHASES.slice().reverse(), sy = 232, sh = 7;
+    if (!n) { fill("#E5E5EA"); doc.roundedRect(L, sy, W, sh, 2, 2, "F"); }
+    else {
+      var used = order.filter(function (p) { return inPhase(p) > 0; }), sx = L;
+      used.forEach(function (p, i) {
+        var w = inPhase(p) / n * W; fill(p.c);
+        if (used.length === 1) doc.roundedRect(sx, sy, w, sh, 2, 2, "F");
+        else if (i === 0) { doc.roundedRect(sx, sy, w, sh, 2, 2, "F"); doc.rect(sx + w / 2, sy, w / 2 + 0.05, sh, "F"); }
+        else if (i === used.length - 1) { doc.roundedRect(sx, sy, w, sh, 2, 2, "F"); doc.rect(sx - 0.05, sy, w / 2, sh, "F"); }
+        else doc.rect(sx - 0.05, sy, w + 0.1, sh, "F");
+        sx += w;
+      });
+    }
+    var items = order.map(function (p) { return [p, [[p.name + " ", "normal", INK2], [String(inPhase(p)), "bold", INK]]]; });
+    var lsize = 8.5, total = items.reduce(function (a, it) { return a + 4 + runsWidth(it[1], lsize); }, 0);
+    if (total > W - 8) { lsize = 7.5; total = items.reduce(function (a, it) { return a + 4 + runsWidth(it[1], lsize); }, 0); }
+    var gap = (W - total) / (items.length - 1), lx = L;
+    items.forEach(function (it) {
+      fill(it[0].c); doc.circle(lx + 1.3, 244.3, 1.3, "F");
+      lx = runs(it[1], lx + 4, 245.3, lsize) + gap;
+    });
+
+    // ================= Page 2: calendar =================
+    doc.addPage();
+    function pageHead(h, right) {
+      font(9, "bold", FAINT); doc.setCharSpace(0.6); doc.text(("Mood report · " + title).toUpperCase(), L, 26); doc.setCharSpace(0);
+      font(22, "bold", INK); doc.text(h, L, 36);
+      font(9, "normal", MUTED); doc.text(right, R, 36, { align: "right" });
+      stroke(LINE, 0.3); doc.line(L, 42, R, 42);
+    }
+    pageHead("Daily log", "The month as a calendar");
+    var lead = (weekday(1) + 6) % 7, rows = Math.ceil((lead + dim) / 7);
+    var cg = 1.6, cw = (W - cg * 6) / 7, ch = rows > 5 ? 32 : 39, gy = 53;
+    ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach(function (t, i) {
+      font(7.5, "bold", FAINT); doc.setCharSpace(0.4); doc.text(t.toUpperCase(), L + i * (cw + cg) + 1.5, gy - 3); doc.setCharSpace(0);
+    });
+    var cut = [], nsize = 7.6, lh = nsize * 0.3528 * 1.3;
+    for (d = 1; d <= dim; d++) {
+      var idx = lead + d - 1, x = L + (idx % 7) * (cw + cg), y = gy + Math.floor(idx / 7) * (ch + cg);
+      var e = byDay[d];
+      if (d > lastDay) {
+        stroke("#EEEEF2", 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "S");
+        font(9, "bold", "#C7C7CC"); doc.text(String(d), x + 2.2, y + 5.6);
+        continue;
+      }
+      if (!e) {
+        fill("#FFFFFF"); stroke("#D1D1D6", 0.25); dash([0.8, 0.8]); doc.roundedRect(x, y, cw, ch, 3, 3, "FD"); dash();
+        font(9, "bold", FAINTER); doc.text(String(d), x + 2.2, y + 5.6);
+        badge(x + cw - 4.4, y + 4.5, 2.5, null, 8);
+        font(nsize, "normal", FAINTER); doc.text("Not rated", x + 2.2, y + 10.8);
+        continue;
+      }
+      var p = phaseOf(e.rating);
+      fill(tint(p.c, 0.08)); stroke(tint(p.c, 0.22), 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "FD");
+      font(9, "bold", INK); doc.text(String(d), x + 2.2, y + 5.6);
+      badge(x + cw - 4.4, y + 4.5, 2.5, e.rating, 8);
+      if (e.note) {
+        font(nsize, "normal", INK2);
+        var lines = doc.splitTextToSize(e.note, cw - 4.2), max = Math.floor((ch - 10) / lh);
+        if (lines.length > max) {
+          lines = lines.slice(0, max);
+          var last = lines[max - 1];
+          while (last.length && tw(last + "…") > cw - 4.2) last = last.slice(0, -1);
+          lines[max - 1] = last.replace(/\s+$/, "") + "…";
+          cut.push(e);
+        }
+        doc.text(lines, x + 2.2, y + 10.8, { lineHeightFactor: 1.3 });
+      }
+    }
+    var ky = gy + rows * (ch + cg) + 4, kx = L;
+    order.forEach(function (p) {
+      fill(p.c); doc.roundedRect(kx, ky - 2.6, 3, 3, 0.8, 0.8, "F");
+      font(8, "normal", MUTED); doc.text(p.name, kx + 4.3, ky); kx += 4.3 + tw(p.name) + 6;
+    });
+    if (cut.length) { font(8, "normal", FAINT); doc.text("Notes marked … continue on the next page.", L, ky + 6); }
+
+    // ================= Page 3 (only when needed): long notes in full =================
+    if (cut.length) {
+      doc.addPage();
+      pageHead("Notes in full", "Notes too long for the calendar");
+      var yy = 52;
+      cut.forEach(function (e) {
+        font(9, "normal", INK2);
+        var lines = doc.splitTextToSize(e.note, W - 34), h = Math.max(lines.length * 4.4, 5) + 4;
+        if (yy + h > 275) { doc.addPage(); pageHead("Notes in full", "Continued"); yy = 52; }
+        badge(L + 2.6, yy + 0.6, 2.5, e.rating, 8);
+        font(9, "bold", INK); doc.text(WD[weekday(e.day)] + " " + e.day + " " + MON3[M - 1], L + 7.5, yy + 1.8);
+        font(9, "normal", INK2); doc.text(lines, L + 34, yy + 1.8, { lineHeightFactor: 1.38 });
+        yy += h;
+        stroke(LINE, 0.2); doc.line(L, yy - 2, R, yy - 2);
+        yy += 2;
+      });
+      }
+
+    var count2 = doc.getNumberOfPages();
+    for (var pg = 1; pg <= count2; pg++) {
+      doc.setPage(pg);
+      font(8, "normal", FAINTER);
+      doc.text("Mood Tracker · report for " + title, L, 288);
+      doc.text("Page " + pg + " of " + count2, R, 288, { align: "right" });
+    }
+    return doc;
+  }
+
+  if (typeof module === "object" && module.exports) module.exports = buildReportPDF;
+  root.buildReportPDF = buildReportPDF;
+})(typeof globalThis !== "undefined" ? globalThis : this);
