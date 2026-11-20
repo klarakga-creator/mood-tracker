@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.10.0";
+  var VERSION = "1.11.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -172,7 +172,7 @@
   });
 
   // Note: grows as you type, with a character count.
-  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 120) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
+  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 44) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
   noteEl.addEventListener("input", growNote);
 
   function setDay(d) {
@@ -191,7 +191,9 @@
 
   function renderToday() {
     grid.classList.toggle("picked", tapped && selected !== null);
+    var wasHidden = noteEl.parentNode.hidden;
     noteEl.parentNode.hidden = selected === null;
+    if (wasHidden && selected !== null) growNote();
     rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
