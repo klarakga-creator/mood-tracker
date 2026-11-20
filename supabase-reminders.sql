@@ -22,7 +22,7 @@ select cron.schedule(
   '*/15 * * * *',
   $$
   select net.http_post(
-    url := 'https://wcfbfyozhknogikbffrh.supabase.co/functions/v1/mood?action=tick',
+    url := 'https://wcfbfyozhknogikbffrh.supabase.co/functions/v1/bright-handler?action=tick',
     headers := jsonb_build_object('Content-Type', 'application/json',
                                   'x-cron-secret', (select value from public.app_secrets where name = 'cron')),
     body := '{}'::jsonb

@@ -3,7 +3,7 @@
   "use strict";
   var App = window.MoodApp, cfg = window.MOOD_CONFIG || {};
   if (!App || !App.Sync || !App.Sync.client) return;
-  var sb = App.Sync.client, FN = cfg.supabaseUrl + "/functions/v1/mood";
+  var sb = App.Sync.client, FN = cfg.supabaseUrl + "/functions/v1/" + (cfg.functionName || "mood");
   function $(id) { return document.getElementById(id); }
 
   var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -19,7 +19,7 @@
     });
     var data = {};
     try { data = await res.json(); } catch (_) {}
-    if (!res.ok && !data.error) data.error = "Server error " + res.status + (res.status === 404 ? " (the mood function isn't deployed yet)" : "");
+    if (!res.ok && !data.error) data.error = "Server error " + res.status + (res.status === 404 ? " (the server function wasn't found)" : "");
     return data;
   }
 
