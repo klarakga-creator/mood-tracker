@@ -17,6 +17,21 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="splash" aria-hidden="true">
+    <style>
+      #splash { position: fixed; inset: 0; z-index: 999; display: grid; place-items: center; background: #F5F1EB; opacity: 0; pointer-events: none; transition: opacity .3s ease; }
+      #splash.show { opacity: 1; pointer-events: auto; }
+      #splash svg { width: 96px; height: 96px; }
+      #splash .eye { transform-box: fill-box; transform-origin: center; animation: sp-blink 2.4s ease-in-out infinite; }
+      #splash .smile { stroke-dasharray: 346; stroke-dashoffset: 346; animation: sp-draw 2.4s cubic-bezier(.5,0,.3,1) infinite; }
+      @keyframes sp-draw { 0% { stroke-dashoffset: 346; } 40%, 70% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -346; } }
+      @keyframes sp-blink { 0%, 44%, 52%, 100% { transform: scaleY(1); } 48% { transform: scaleY(.1); } }
+      @media (prefers-color-scheme: dark) { #splash { background: #000; } #splash svg { color: #F5F1EB; } }
+      @media (prefers-reduced-motion: reduce) { #splash .eye, #splash .smile { animation: none; stroke-dashoffset: 0; } }
+    </style>
+    <svg viewBox="96 120 320 260" fill="none" style="color:#2E2B28"><circle class="eye" cx="186" cy="196" r="24" fill="currentColor"/><circle class="eye" cx="326" cy="196" r="24" fill="currentColor"/><path class="smile" d="M146 276A110 110 0 0 0 366 276" stroke="currentColor" stroke-width="28" stroke-linecap="round"/></svg>
+    <script>setTimeout(function () { var s = document.getElementById("splash"); if (s) s.classList.add("show"); }, 500);</script>
+  </div>
   <main id="app">
     <!-- Today -->
     <section class="view" id="view-today" aria-label="Today">

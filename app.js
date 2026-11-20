@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.11.3";
+  var VERSION = "1.12.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -480,6 +480,7 @@
 
   // ---------- Start ----------
   setDay(today());
+  (function () { var sp = $("splash"); if (!sp) return; sp.classList.remove("show"); setTimeout(function () { sp.remove(); }, 350); })();
   // Roll over to the new day if the app stays open past midnight.
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && savedRating === null && selected === null && keyOf(day) !== keyOf(today())) setDay(today());
