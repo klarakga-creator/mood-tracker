@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -148,6 +148,7 @@
   SCALE.forEach(function (_, v) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "rate"; b.textContent = v;
+    b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
     b.addEventListener("click", function () { selected = v; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     grid.appendChild(b);
@@ -160,24 +161,28 @@
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
     dayInput.value = keyOf(d);
     dayInput.max = keyOf(today());
-    var isToday = keyOf(d) === keyOf(today());
-    $("today-title").textContent = isToday ? "Today" : d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    var diff = Math.round((today() - d) / 864e5);
+    $("today-title").textContent = diff === 0 ? "Today" : diff === 1 ? "Yesterday" : d.toLocaleDateString("en-GB", { weekday: "long" });
+    $("today-date").textContent = d.toLocaleDateString("en-GB", diff === 0 || diff === 1 ? { weekday: "long", day: "numeric", month: "long" } : { day: "numeric", month: "long", year: "numeric" });
     renderToday();
   }
 
   function renderToday() {
+    grid.classList.toggle("picked", selected !== null);
     Array.prototype.forEach.call(grid.children, function (b, v) {
-      var isOn = v === selected;
-      b.setAttribute("aria-pressed", isOn ? "true" : "false");
-      b.style.background = isOn ? col(v) : "color-mix(in srgb, " + col(v) + " 15%, transparent)";
-      b.style.color = isOn ? on(v) : ink(v);
+      b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
+    $("view-today").style.setProperty("--mood", selected === null ? "var(--ph-bal)" : col(selected));
     var slot = $("level-slot");
     if (selected === null) slot.innerHTML = "";
     else {
-      var c = col(selected), t = ink(selected);
-      slot.innerHTML = '<div class="level" style="background:color-mix(in srgb, ' + c + ' 16%, transparent)"><span class="num" style="color:' + t + '">' + selected +
-        '</span><div><div class="phase" style="color:' + t + '">' + phaseOf(selected).name + "</div><p>" + SCALE[selected] + "</p></div></div>";
+      var p = phaseOf(selected), dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
+      var arrow = { up: "M7 17L17 7M9 7h8v8", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 9v8H9" }[dir];
+      slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
+        '<div class="level-top"><span class="level-num">' + selected + '</span><span class="level-dir" title="' + (dir === "up" ? "Elevated" : dir === "down" ? "Low" : "Balanced") + '">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="' + arrow + '"/></svg></span></div>' +
+        '<div class="phase">' + p.name + '</div><p>' + SCALE[selected] + '</p>' +
+        '<span class="level-big" aria-hidden="true">' + selected + '</span></div>';
     }
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
