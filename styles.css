@@ -123,6 +123,7 @@ button.cell, label.cell.link { cursor: pointer; }
 .scale-item + .scale-item::before { content: ""; position: absolute; top: 0; left: 62px; right: 0; border-top: 0.5px solid var(--sep); }
 .scale-item .ph { font-size: 15px; font-weight: 600; }
 .scale-item p { margin: 2px 0 0; font-size: 15px; line-height: 1.3; }
+#sync-status { text-align: right; overflow-wrap: anywhere; padding: 8px 0; }
 .version { font-size: 12px; text-align: center; }
 
 /* Floating glass tab bar */

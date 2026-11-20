@@ -81,7 +81,7 @@
       setStatus("Up to date");
     } catch (err) {
       console.warn("Sync failed", err);
-      setStatus("Couldn't sync, will retry");
+      setStatus("Couldn't sync: " + ((err && (err.message || err.code)) || "unknown error"));
     } finally {
       busy = false;
       if (again) { again = false; syncAll(); }
