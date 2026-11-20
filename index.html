@@ -88,11 +88,14 @@
               <div class="cell"><input type="password" id="a-password" placeholder="Password" aria-label="Password" autocomplete="current-password"></div>
               <button class="cell link" id="a-signin" type="button">Sign in</button>
               <button class="cell link" id="a-signup" type="button">Create account</button>
+              <button class="cell link" id="a-forgot" type="button">Forgot password?</button>
             </div>
             <div class="group" id="signed-in" hidden>
               <div class="cell"><span>Signed in</span><span class="muted" id="a-who"></span></div>
               <div class="cell"><span>Status</span><span class="muted" id="sync-status">On this device only</span></div>
               <button class="cell link" id="a-syncnow" type="button">Sync now</button>
+              <button class="cell link" id="a-changepw" type="button">Change password</button>
+              <div class="cell" id="newpw-cell" hidden><input type="password" id="a-newpw" placeholder="New password (8+ characters)" aria-label="New password" autocomplete="new-password"><button class="link strong" id="a-savepw" type="button">Save</button></div>
               <button class="cell link" id="a-signout" type="button">Sign out</button>
             </div>
             <div class="group-f" id="sync-foot">Sign in to keep your iPhone and Mac in sync. Your entries are always saved on this device too, and work offline.</div>

@@ -111,10 +111,31 @@
     $("a-password").value = "";
     if (!r.data.session) App.toast("Check your email to confirm");
   });
+  $("a-forgot").addEventListener("click", async function () {
+    var email = $("a-email").value.trim();
+    if (!email) { App.toast("Enter your email first"); return; }
+    var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    App.toast(r.error ? "Couldn't send the email, try again" : "Check your email for a reset link");
+  });
+  function askNewPassword() {
+    $("newpw-cell").hidden = false;
+    var tab = document.querySelector('.tabbar [data-tab="settings"]'); if (tab) tab.click();
+    setTimeout(function () { $("a-newpw").focus(); }, 300);
+  }
+  $("a-changepw").addEventListener("click", askNewPassword);
+  $("a-savepw").addEventListener("click", async function () {
+    var pw = $("a-newpw").value;
+    if (pw.length < 8) { App.toast("Use 8 or more characters"); return; }
+    var r = await sb.auth.updateUser({ password: pw });
+    if (r.error) { App.toast(r.error.message); return; }
+    $("a-newpw").value = ""; $("newpw-cell").hidden = true;
+    App.toast("Password changed");
+  });
   $("a-signout").addEventListener("click", async function () { await sb.auth.signOut(); App.toast("Signed out"); });
   $("a-syncnow").addEventListener("click", syncAll);
 
-  sb.auth.onAuthStateChange(function (_event, session) {
+  sb.auth.onAuthStateChange(function (event, session) {
+    if (event === "PASSWORD_RECOVERY") setTimeout(function () { askNewPassword(); App.toast("Choose a new password"); }, 0);
     var was = user && user.id;
     user = session ? session.user : null;
     if (user && was && was !== user.id) { synced = {}; saveSynced(); }
