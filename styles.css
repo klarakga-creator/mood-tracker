@@ -68,13 +68,20 @@ button { font: inherit; color: inherit; }
 .day-pick input { position: absolute; inset: 0; width: 100%; height: 100%; min-width: 0; max-width: 100%; -webkit-appearance: none; appearance: none; opacity: 0; border: 0; margin: 0; padding: 0; cursor: pointer; font-size: 16px; }
 .day-pick:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 50%; }
 
-.rate-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px 10px; justify-items: center; }
-.rate { --c: var(--ph-bal); --on: #fff; width: 100%; max-width: 62px; aspect-ratio: 1; border-radius: 50%; border: 0; cursor: pointer;
-  background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 24px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+.rate-grid { display: grid; gap: 10px; }
+.rate-bar, .rate-groups { display: grid; grid-template-columns: repeat(11, minmax(0,1fr)); }
+.rate-bar { position: relative; height: 48px; align-items: center; justify-items: center; }
+.rate-bar::before { content: ""; position: absolute; left: calc(100% / 22); right: calc(100% / 22); top: 50%; height: 2px; margin-top: -1px; background: var(--sep); }
+.rate { --c: var(--ph-bal); --on: #fff; position: relative; width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--c); color: var(--on); font-family: var(--font-round); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
   transition: transform .18s cubic-bezier(.3,1.4,.5,1), background-color .18s, color .18s; }
+.rate::after { content: ""; position: absolute; inset: -8px -3px; }
 .rate-grid.picked .rate { background: var(--tile); color: var(--rate-off); }
-.rate[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--label); }
-.rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.06); box-shadow: none; }
+.rate-grid.picked .rate[aria-pressed="true"] { background: var(--c); color: var(--on); transform: scale(1.5); }
+.rate[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--label); }
+.rate-grid.picked .rate[aria-pressed="true"] { box-shadow: none; }
+.rate-groups { column-gap: 4px; }
+.rate-groups span { --c: var(--ph-bal); border-top: 3px solid var(--c); border-radius: 2px; padding-top: 5px; text-align: center; font-size: 11px; font-weight: 700; }
 .rate:focus-visible, .btn-prom:focus-visible, .round:focus-visible, .glass-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 .level { --c: var(--ph-bal); --on: #fff; padding: 14px 16px 18px; border-radius: 26px; background: var(--c); color: var(--on); animation: pop .25s ease both; }
@@ -103,8 +110,13 @@ button { font: inherit; color: inherit; }
 .level-big { font-size: 46px; font-weight: 400; line-height: .9; letter-spacing: -0.04em; margin: 2px 0 0 2px; }
 @keyframes pop { from { opacity: .3; transform: scale(.97); } to { opacity: 1; transform: none; } }
 
-.note-card { display: grid; gap: 4px; padding: 14px 16px 10px; border-radius: 22px; background: var(--tile); }
-.note { width: 100%; min-height: 72px; resize: none; font: inherit; font-size: 16px; color: var(--label); background: transparent; border: 0; padding: 0; }
+.note-card { display: grid; gap: 10px; padding: 14px; border-radius: 22px; background: var(--tile); }
+.note-head { display: flex; align-items: center; gap: 8px; padding: 2px 14px 0; }
+.note-ico { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, var(--label) 75%, transparent); display: grid; place-items: center; }
+.note-sub { font-size: 15px; color: var(--label2); }
+.note-count { margin-left: auto; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
+.note { display: block; width: 100%; min-height: 120px; resize: none; overflow: hidden; font: inherit; font-size: 15px; color: var(--label); border: 0; border-radius: 14px; padding: 8px 14px;
+  line-height: 26px; background: repeating-linear-gradient(transparent 0 25px, color-mix(in srgb, var(--label) 28%, transparent) 25px 26px) content-box, var(--bg); background-attachment: local, scroll; }
 .note::placeholder { color: var(--label2); }
 .note:focus { outline: none; }
 .note-card:focus-within { box-shadow: 0 0 0 2px var(--label); }

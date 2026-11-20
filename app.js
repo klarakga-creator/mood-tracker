@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.8.0";
+  var VERSION = "1.9.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -145,20 +145,36 @@
   // ---------- Today ----------
   var day = today(), selected = null, tapped = false, savedRating = null, savedNote = "";
   var grid = $("rating-grid"), noteEl = $("note"), saveBtn = $("save"), dayInput = $("day");
+  var rateBtns = [];
   SCALE.forEach(function (_, v) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "rate"; b.textContent = v;
     b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
     b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
-    grid.appendChild(b);
+    rateBtns.push(b);
   });
+  // Rating: dots on a line, with the phase names underneath.
+  var bar = document.createElement("div"); bar.className = "rate-bar";
+  rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
+  var groups = document.createElement("div"); groups.className = "rate-groups";
+  PHASES.slice().reverse().forEach(function (p) {
+    var x = document.createElement("span"); x.style.gridColumn = "span " + (p.hi - p.lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
+    x.textContent = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" }[p.name];
+    groups.appendChild(x);
+  });
+  grid.appendChild(groups);
+
+  // Note: grows as you type, with a character count.
+  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 120) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
+  noteEl.addEventListener("input", growNote);
 
   function setDay(d) {
     day = d; tapped = false;
     var e = entries[keyOf(d)];
     if (e && !e.deleted) { selected = e.rating; noteEl.value = e.note || ""; savedRating = e.rating; savedNote = e.note || ""; }
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
+    growNote();
     dayInput.value = keyOf(d);
     dayInput.max = keyOf(today());
     var diff = Math.round((today() - d) / 864e5);
@@ -169,7 +185,7 @@
 
   function renderToday() {
     grid.classList.toggle("picked", tapped && selected !== null);
-    Array.prototype.forEach.call(grid.children, function (b, v) {
+    rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
     var slot = $("level-slot");
