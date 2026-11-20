@@ -1,7 +1,7 @@
 /* iOS-style layout. Phase colours (--ph-*) come from Klara's chosen palette; each has a fill, an -ink for text and an -on for text on the fill. */
-@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-SemiBold.ttf") format("truetype"); font-weight: 500 600; font-display: swap; }
-@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Bold.ttf") format("truetype"); font-weight: 700 900; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Regular.woff2") format("woff2"), url("fonts/DMSans-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-SemiBold.woff2") format("woff2"), url("fonts/DMSans-SemiBold.ttf") format("truetype"); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Bold.woff2") format("woff2"), url("fonts/DMSans-Bold.ttf") format("truetype"); font-weight: 700 900; font-display: swap; }
 :root {
   --bg: #F5F1EB; --label: #2E2B28; --label2: rgba(60,60,67,.6); --fill: rgba(118,118,128,.12); --fill2: rgba(118,118,128,.08);
   --tile: #ECE7E0; --rate-off: #B3ABA1; --grouped: #ECE7E0; --cell: #FFFFFF; --sep: rgba(60,60,67,.18); --glass: rgba(255,255,255,.72); --glass-edge: rgba(0,0,0,.08);

@@ -1,11 +1,11 @@
-// Offline support. Files come from the network when online (so updates show up
-// the next time the app opens) and from this cache when offline.
-const CACHE = "mood-v22";
-const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "push.js", "config.js", "vendor/supabase.js", "vendor/jspdf.umd.min.js", "report-pdf.js", "fonts/DMSans-Regular.ttf", "fonts/DMSans-SemiBold.ttf", "fonts/DMSans-Bold.ttf", "manifest.webmanifest",
+// Offline-first: files come straight from this cache so the app opens instantly,
+// and a fresh copy is fetched in the background (updates show on the next open).
+const CACHE = "mood-v23";
+const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "push.js", "config.js", "vendor/supabase.js", "vendor/jspdf.umd.min.js", "report-pdf.js", "fonts/DMSans-Regular.ttf", "fonts/DMSans-SemiBold.ttf", "fonts/DMSans-Bold.ttf", "fonts/DMSans-Regular.woff2", "fonts/DMSans-SemiBold.woff2", "fonts/DMSans-Bold.woff2", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (e) => {
@@ -19,15 +19,13 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
-  e.respondWith(
-    fetch(req, { cache: "no-cache" })
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy));
-        return res;
-      })
-      .catch(() => caches.match(req).then((hit) => hit || caches.match("index.html")))
-  );
+  const fresh = fetch(req, { cache: "no-cache" }).then((res) => {
+    if (res.ok) { const copy = res.clone(); e.waitUntil(caches.open(CACHE).then((c) => c.put(req, copy))); }
+    return res;
+  });
+  e.waitUntil(fresh.catch(() => {}));
+  e.respondWith(caches.match(req, { ignoreSearch: req.mode === "navigate" })
+    .then((hit) => hit || fresh.catch(() => caches.match("index.html"))));
 });
 
 // Push notifications (used once the reminder server is set up).
