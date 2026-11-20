@@ -286,10 +286,8 @@
     var st = streak(), slot = $("streak-slot");
     if (!st) { slot.innerHTML = ""; return; }
     slot.innerHTML = '<button type="button" class="streak" style="--c:' + col(st.last) + ';--on:' + on(st.last) + '">' +
-      '<span class="streak-n">' + st.n + '<small>days</small></span><span class="streak-t"><strong>' +
-      (st.dir > 0 ? "7 or higher" : "3 or lower") + " for " + st.n + " days in a row</strong>" +
-      "<span>This can be an early warning sign. See what can help.</span></span>" +
-      '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>';
+      '<span class="streak-n">' + st.n + '</span><span class="streak-t">' + "days in a row at " + (st.dir > 0 ? "7 or higher" : "3 or lower") + "</span>" +
+      '<span class="streak-more">Tips</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>';
     slot.firstChild.addEventListener("click", function () { openInfo(st.last); });
   }
 
