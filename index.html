@@ -30,11 +30,13 @@
         </header>
         <div class="stack">
           <div id="streak-slot"></div>
-          <div class="stack tight">
-            <h2 class="title2">How was your mood?</h2>
-            <p class="muted big">Tap a number to see what it means.</p>
-          </div>
-          <div class="rate-grid" id="rating-grid" role="group" aria-label="Mood rating"></div>
+          <section class="rate-card">
+            <div class="stack tight">
+              <h2 class="title2">How was your mood?</h2>
+              <p class="muted big">Tap a number to see what it means.</p>
+            </div>
+            <div class="rate-grid" id="rating-grid" role="group" aria-label="Mood rating"></div>
+          </section>
           <div id="level-slot"></div>
           <div class="note-card">
             <div class="note-head">
@@ -43,7 +45,7 @@
               <span class="note-sub">How did today go?</span>
               <span class="note-count" id="note-count" aria-hidden="true"></span>
             </div>
-            <textarea class="note" id="note" rows="4" placeholder="Sleep, medication, events, anything worth remembering"></textarea>
+            <textarea class="note" id="note" rows="1" placeholder="Sleep, medication, anything worth noting"></textarea>
           </div>
           <button class="btn-prom" id="save" type="button" disabled></button>
           <button class="btn-plain-danger" id="delete-day" type="button" hidden>Delete this day</button>
