@@ -6,16 +6,17 @@
 (function (root) {
   "use strict";
 
+  // c: fill colour, t: text colour on white, on: text colour on top of the fill
   var PHASES = [
-    { name: "Mania", lo: 9, hi: 10, c: "#FF3B30" },
-    { name: "Hypomania", lo: 7, hi: 8, c: "#FF9500" },
-    { name: "Balanced Mood", lo: 4, hi: 6, c: "#34C759", band: ["Balanced Mood"] },
-    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#007AFF", band: ["Mild to Moderate", "Depression"] },
-    { name: "Severe Depression", lo: 0, hi: 1, c: "#5856D6" }
+    { name: "Mania", lo: 9, hi: 10, c: "#B44E4B", t: "#9E3F3C", on: "#FFFFFF" },
+    { name: "Hypomania", lo: 7, hi: 8, c: "#D47F50", t: "#B5612F", on: "#FFFFFF" },
+    { name: "Balanced Mood", lo: 4, hi: 6, c: "#3E635C", t: "#3E635C", on: "#FFFFFF", band: ["Balanced Mood"] },
+    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "#D8A5C0", t: "#A8628A", on: "#2E2B28", band: ["Mild to Moderate", "Depression"] },
+    { name: "Severe Depression", lo: 0, hi: 1, c: "#848BBA", t: "#5E66A0", on: "#FFFFFF" }
   ];
   function phaseOf(v) { for (var i = 0; i < PHASES.length; i++) if (v >= PHASES[i].lo && v <= PHASES[i].hi) return PHASES[i]; return PHASES[2]; }
 
-  var INK = "#1C1C1E", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
+  var INK = "#2E2B28", INK2 = "#3A3A3C", MUTED = "#6E6E73", FAINT = "#8E8E93", FAINTER = "#AEAEB2", LINE = "#E5E5EA";
   var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   var MON3 = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -57,7 +58,15 @@
     doc.setProperties({ title: "Mood report " + title, creator: "Mood Tracker" });
     var L = 15, R = 195, W = R - L;
 
-    function font(size, weight, color) { doc.setFont("helvetica", weight || "normal"); doc.setFontSize(size); if (color) doc.setTextColor.apply(doc, typeof color === "string" ? rgb(color) : color); }
+    // Optional custom fonts: data.fonts = { regular, bold, display? } as base64 TTF. Big bold text uses display when given.
+    var FAM = "helvetica", DISP = null;
+    if (data.fonts && data.fonts.regular && data.fonts.bold) {
+      doc.addFileToVFS("body-r.ttf", data.fonts.regular); doc.addFont("body-r.ttf", "Body", "normal");
+      doc.addFileToVFS("body-b.ttf", data.fonts.bold); doc.addFont("body-b.ttf", "Body", "bold");
+      FAM = "Body";
+      if (data.fonts.display) { doc.addFileToVFS("disp.ttf", data.fonts.display); doc.addFont("disp.ttf", "Display", "bold"); DISP = "Display"; }
+    }
+    function font(size, weight, color) { doc.setFont(DISP && weight === "bold" && size >= 13 ? DISP : FAM, weight || "normal"); doc.setFontSize(size); if (color) doc.setTextColor.apply(doc, typeof color === "string" ? rgb(color) : color); }
     function fill(c) { doc.setFillColor.apply(doc, typeof c === "string" ? rgb(c) : c); }
     function stroke(c, w) { doc.setDrawColor.apply(doc, typeof c === "string" ? rgb(c) : c); doc.setLineWidth(w || 0.2); }
     function dash(p) { doc.setLineDashPattern(p || [], 0); }
@@ -75,7 +84,7 @@
         return;
       }
       fill(phaseOf(rating).c); doc.circle(x, y, r, "F");
-      font(size, "bold", "#FFFFFF"); doc.text(String(rating), x, y + size * 0.125, { align: "center" });
+      font(size, "bold", phaseOf(rating).on); doc.text(String(rating), x, y + size * 0.125, { align: "center" });
     }
 
     // ================= Page 1: the graph =================
@@ -97,63 +106,53 @@
     });
     stroke(LINE, 0.3); doc.line(L, 45, R, 45);
 
-    // Chart card
+    // Chart card: squared grid, one row per rating, big circles joined by a thin line
     var bx = L, by = 51, bh = 134;
-    fill("#FAFAFC"); stroke("#EEEEF2", 0.3); doc.roundedRect(bx, by, W, bh, 5, 5, "FD");
+    fill("#ECE7E0"); doc.roundedRect(bx, by, W, bh, 5, 5, "F");
     font(13, "bold", INK); doc.text("Mood over the month", bx + 6, by + 10);
-    font(8.5, "normal", FAINT); doc.text("Each dot is one day's rating. The shaded bands show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
-    var px0 = L + 12, px1 = R - 35, py0 = by + 23, py1 = by + bh - 13;
+    font(8.5, "normal", MUTED); doc.text("Each circle is one day's rating. The bars on the right show the five phases of the scale, and the dotted line is your average.", bx + 6, by + 16, { maxWidth: W - 12 });
+    var px0 = L + 12, py0 = by + 24, py1 = by + bh - 13, cell = (py1 - py0) / 10;
+    var cols = Math.floor((R - 37 - px0) / cell), px1 = px0 + cols * cell;
     function X(day) { return px0 + (day - 0.5) / dim * (px1 - px0); }
     function Yv(v) { return py0 + (10 - v) / 10 * (py1 - py0); }
+    fill("#F6F3EE"); doc.rect(px0, py0, px1 - px0, py1 - py0, "F");
+    stroke("#D6CFC5", 0.25);
+    for (var gi = 0; gi <= cols; gi++) doc.line(px0 + gi * cell, py0, px0 + gi * cell, py1);
+    for (var v = 0; v <= 10; v++) {
+      doc.line(px0, Yv(v), px1, Yv(v));
+      if (v % 2 === 0) { font(7.5, "normal", FAINT); doc.text(String(v), px0 - 3, Yv(v) + 1.1, { align: "right" }); }
+    }
     PHASES.forEach(function (p) {
       var top = Yv(Math.min(10, p.hi + 0.5)), bot = Yv(Math.max(0, p.lo - 0.5));
-      fill(tint(p.c, p.lo === 4 ? 0.12 : 0.07)); doc.rect(px0, top, px1 - px0, bot - top, "F");
       fill(p.c); doc.roundedRect(px1 + 2.5, top + 1, 0.9, bot - top - 2, 0.45, 0.45, "F");
       var lines = p.band || [p.name];
-      font(7.5, "bold", p.c);
+      font(7.5, "bold", p.t);
       lines.forEach(function (t, i) { doc.text(t, px1 + 5, (top + bot) / 2 + 1 - (lines.length - 1) * 1.6 + i * 3.2); });
     });
-    for (var v = 0; v <= 10; v += 2) {
-      stroke("#E3E3E8", 0.2); doc.line(px0, Yv(v), px1, Yv(v));
-      font(7.5, "normal", FAINT); doc.text(String(v), px0 - 3, Yv(v) + 1.1, { align: "right" });
-    }
     for (d = 1; d <= dim; d++) {
       var lab = d === 1 || d % 5 === 0;
-      font(lab ? 7 : 7, "normal", lab ? FAINT : "#C7C7CC"); doc.text(lab ? String(d) : "·", X(d), py1 + 6, { align: "center" });
+      font(7, "normal", lab ? FAINT : "#C7C7CC"); doc.text(lab ? String(d) : "\u00B7", X(d), py1 + 6, { align: "center" });
     }
     if (!n) {
       font(11, "normal", FAINT); doc.text("No days rated this month", (px0 + px1) / 2, (py0 + py1) / 2, { align: "center" });
     } else {
-      // Dashed bridge over single missing days, smooth line through the rest
-      doc.setLineCap("round");
-      for (d = 2; d < dim; d++) if (!byDay[d] && byDay[d - 1] && byDay[d + 1]) {
-        stroke("#B9B9BE", 0.45); dash([1, 1.4]); doc.line(X(d - 1), Yv(byDay[d - 1].rating), X(d + 1), Yv(byDay[d + 1].rating)); dash();
+      var rad = Math.min(cell * 0.3, 2.6);
+      days.forEach(function (p) { fill(phaseOf(p.rating).c); doc.circle(X(p.day), Yv(p.rating), rad, "F"); });
+      stroke("#8A8A8A", 0.4); dash([0.1, 1.3]); doc.setLineCap("round"); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
+      // Thin straight line through the centres, dashed over single missing days
+      stroke(INK, 0.3); doc.setLineJoin("round");
+      for (d = 1; d < dim; d++) {
+        if (byDay[d] && byDay[d + 1]) doc.line(X(d), Yv(byDay[d].rating), X(d + 1), Yv(byDay[d + 1].rating));
+        else if (byDay[d] && !byDay[d + 1] && byDay[d + 2]) { dash([0.8, 0.9]); doc.line(X(d), Yv(byDay[d].rating), X(d + 2), Yv(byDay[d + 2].rating)); dash(); }
       }
-      var segs = [], seg = [];
-      for (d = 1; d <= dim; d++) { if (byDay[d]) seg.push([X(d), Yv(byDay[d].rating)]); else { if (seg.length) segs.push(seg); seg = []; } }
-      if (seg.length) segs.push(seg);
-      stroke("#8F8F92", 0.75); doc.setLineJoin("round");
-      segs.forEach(function (pts) {
-        if (pts.length < 2) return;
-        doc.moveTo(pts[0][0], pts[0][1]);
-        for (var i = 0; i < pts.length - 1; i++) {
-          var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2, k = 0.16;
-          var lo = Math.min(p1[1], p2[1]), hi = Math.max(p1[1], p2[1]);
-          function cl(q) { return Math.min(Math.max(q, lo), hi); }
-          doc.curveTo(p1[0] + (p2[0] - p0[0]) * k, cl(p1[1] + (p2[1] - p0[1]) * k), p2[0] - (p3[0] - p1[0]) * k, cl(p2[1] - (p3[1] - p1[1]) * k), p2[0], p2[1]);
-        }
-        doc.stroke();
-      });
-      stroke("#9C9CA0", 0.5); dash([0.1, 1.4]); doc.line(px0, Yv(avg), px1, Yv(avg)); dash();
-      days.forEach(function (p) { fill(phaseOf(p.rating).c); stroke("#FFFFFF", 0.4); doc.circle(X(p.day), Yv(p.rating), 1.25, "FD"); });
 
       // Callouts on the highest and lowest day
       function short(s) { return s.length > 48 ? s.slice(0, 46).replace(/\s+\S*$/, "") + "…" : s; }
       function callout(p, label, up) {
         var x = Math.min(Math.max(X(p.day), px0 + 26), px1 - 26), cy = Yv(p.rating), g = up ? -1 : 1;
         var hasNote = !!p.note, h = hasNote ? 7 : 3.5;
-        var tTop = up ? cy - 7 - h : cy + 7;
-        stroke("#B4B4B8", 0.25); doc.line(X(p.day), cy + g * 2.6, X(p.day), up ? tTop + h + 0.8 : tTop - 0.8);
+        var tTop = up ? cy - rad - 6 - h : cy + rad + 6;
+        stroke("#B4B4B8", 0.25); doc.line(X(p.day), cy + g * (rad + 0.8), X(p.day), up ? tTop + h + 0.8 : tTop - 0.8);
         font(7.5, "bold", INK2); doc.text(label, x, tTop + 2.6, { align: "center" });
         if (hasNote) { font(7.5, "normal", MUTED); doc.text("“" + short(p.note) + "”", x, tTop + 6.4, { align: "center" }); }
       }
@@ -174,7 +173,7 @@
     var tg = 3, twd = (W - tg * 3) / 4, ty = 192;
     tiles.forEach(function (t, i) {
       var x = L + i * (twd + tg);
-      fill("#F5F5F8"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
+      fill("#F1EDE7"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
       font(8.5, "normal", MUTED); doc.text(t[0], x + 4, ty + 6);
       font(18, "bold", INK); doc.text(t[1], x + 4, ty + 14);
       font(7.5, "normal", FAINT); doc.text(t[2], x + 4, ty + 18.5);
@@ -218,37 +217,78 @@
     ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].forEach(function (t, i) {
       font(7.5, "bold", FAINT); doc.setCharSpace(0.4); doc.text(t.toUpperCase(), L + i * (cw + cg) + 1.5, gy - 3); doc.setCharSpace(0);
     });
-    var cut = [], nsize = 7.6, lh = nsize * 0.3528 * 1.3;
+    // Each day is a block with its rating in large type. The day of the month sits in a
+    // small circle in the top right corner, with the block cut away around it.
+    var cut = [], nsize = 7.4, lh = nsize * 0.3528 * 1.3, dr = 3.5;
+    // Arc as Bezier curves from angle a to b (radians, y pointing down).
+    function arcTo(cx, cy, R, a, b) {
+      var steps = Math.ceil(Math.abs(b - a) / (Math.PI / 2)), st = (b - a) / steps;
+      for (var q = 0; q < steps; q++) {
+        var a0 = a + q * st, a1 = a0 + st, k = 4 / 3 * Math.tan(st / 4);
+        doc.curveTo(cx + R * Math.cos(a0) - k * R * Math.sin(a0), cy + R * Math.sin(a0) + k * R * Math.cos(a0),
+          cx + R * Math.cos(a1) + k * R * Math.sin(a1), cy + R * Math.sin(a1) - k * R * Math.cos(a1),
+          cx + R * Math.cos(a1), cy + R * Math.sin(a1));
+      }
+    }
+    // A rounded block whose top right corner bends smoothly around the day circle, leaving a gap.
+    function notchedBlock(x, y, w, h, paint) {
+      var rr = 3, cx = x + w - dr, cy = y + dr * 0.85, Rc = dr + 1, f = 2, P = Math.PI;
+      var f1x = cx - Math.sqrt(Math.pow(Rc + f, 2) - Math.pow(y + f - cy, 2)), f1y = y + f;
+      var f2x = x + w - f, f2y = cy + Math.sqrt(Math.pow(Rc + f, 2) - Math.pow(f2x - cx, 2));
+      var t1 = Math.atan2(cy - f1y, cx - f1x), t2 = Math.atan2(cy - f2y, cx - f2x);
+      var cA = Math.atan2(f1y - cy, f1x - cx), cB = Math.atan2(f2y - cy, f2x - cx);
+      if (cA < cB) cA += 2 * P;
+      if (t2 < 0) t2 += 2 * P;
+      doc.moveTo(x + rr, y);
+      doc.lineTo(f1x, y);
+      arcTo(f1x, f1y, f, -P / 2, t1);
+      arcTo(cx, cy, Rc, cA, cB);
+      arcTo(f2x, f2y, f, t2, 2 * P);
+      doc.lineTo(x + w, y + h - rr);
+      arcTo(x + w - rr, y + h - rr, rr, 0, P / 2);
+      doc.lineTo(x + rr, y + h);
+      arcTo(x + rr, y + h - rr, rr, P / 2, P);
+      doc.lineTo(x, y + rr);
+      arcTo(x + rr, y + rr, rr, P, 1.5 * P);
+      doc.close();
+      if (paint === "F") doc.fill(); else doc.stroke();
+    }
+    function dayCircle(x, y, day, color) {
+      var cx = x + w0 - dr, cy = y + dr * 0.85;
+      fill("#ECE7E0"); doc.circle(cx, cy, dr, "F");
+      font(8, "bold", color); doc.text(String(day), cx, cy + 1, { align: "center" });
+    }
+    var w0 = cw;
     for (d = 1; d <= dim; d++) {
       var idx = lead + d - 1, x = L + (idx % 7) * (cw + cg), y = gy + Math.floor(idx / 7) * (ch + cg);
       var e = byDay[d];
       if (d > lastDay) {
-        stroke("#EEEEF2", 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "S");
-        font(9, "bold", "#C7C7CC"); doc.text(String(d), x + 2.2, y + 5.6);
+        stroke("#E3DED6", 0.25); notchedBlock(x, y, cw, ch, "S");
+        dayCircle(x, y, d, "#C9C3BA");
         continue;
       }
       if (!e) {
-        fill("#FFFFFF"); stroke("#D1D1D6", 0.25); dash([0.8, 0.8]); doc.roundedRect(x, y, cw, ch, 3, 3, "FD"); dash();
-        font(9, "bold", FAINTER); doc.text(String(d), x + 2.2, y + 5.6);
-        badge(x + cw - 4.4, y + 4.5, 2.5, null, 8);
-        font(nsize, "normal", FAINTER); doc.text("Not rated", x + 2.2, y + 10.8);
+        stroke("#CFC8BE", 0.25); dash([0.8, 0.8]); notchedBlock(x, y, cw, ch, "S"); dash();
+        dayCircle(x, y, d, FAINTER);
+        font(22, "bold", "#CFC8BE"); doc.text("\u2013", x + 2.6, y + 10.5);
+        font(nsize, "normal", FAINTER); doc.text("Not rated", x + 2.6, y + 16);
         continue;
       }
       var p = phaseOf(e.rating);
-      fill(tint(p.c, 0.08)); stroke(tint(p.c, 0.22), 0.25); doc.roundedRect(x, y, cw, ch, 3, 3, "FD");
-      font(9, "bold", INK); doc.text(String(d), x + 2.2, y + 5.6);
-      badge(x + cw - 4.4, y + 4.5, 2.5, e.rating, 8);
+      fill(p.c); notchedBlock(x, y, cw, ch, "F");
+      dayCircle(x, y, d, INK);
+      font(24, "bold", p.on); doc.text(String(e.rating), x + 2.6, y + 10.8);
       if (e.note) {
-        font(nsize, "normal", INK2);
-        var lines = doc.splitTextToSize(e.note, cw - 4.2), max = Math.floor((ch - 10) / lh);
+        font(nsize, "normal", p.on);
+        var lines = doc.splitTextToSize(e.note, cw - 5), max = Math.floor((ch - 17) / lh);
         if (lines.length > max) {
           lines = lines.slice(0, max);
           var last = lines[max - 1];
-          while (last.length && tw(last + "…") > cw - 4.2) last = last.slice(0, -1);
-          lines[max - 1] = last.replace(/\s+$/, "") + "…";
+          while (last.length && tw(last + "\u2026") > cw - 5) last = last.slice(0, -1);
+          lines[max - 1] = last.replace(/\s+$/, "") + "\u2026";
           cut.push(e);
         }
-        doc.text(lines, x + 2.2, y + 10.8, { lineHeightFactor: 1.3 });
+        doc.text(lines, x + 2.6, y + 16.5, { lineHeightFactor: 1.3 });
       }
     }
     var ky = gy + rows * (ch + cg) + 4, kx = L;

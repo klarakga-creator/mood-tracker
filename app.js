@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.3.0";
+  var VERSION = "1.5.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -19,14 +19,16 @@
     "Total loss of judgement, exorbitant spending, religious delusions and hallucinations."
   ];
   var PHASES = [
-    { name: "Mania", lo: 9, hi: 10, c: "--red" },
-    { name: "Hypomania", lo: 7, hi: 8, c: "--orange" },
-    { name: "Balanced Mood", lo: 4, hi: 6, c: "--green" },
-    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "--blue" },
-    { name: "Severe Depression", lo: 0, hi: 1, c: "--indigo" }
+    { name: "Mania", lo: 9, hi: 10, c: "--ph-mania" },
+    { name: "Hypomania", lo: 7, hi: 8, c: "--ph-hypo" },
+    { name: "Balanced Mood", lo: 4, hi: 6, c: "--ph-bal" },
+    { name: "Mild to Moderate Depression", lo: 2, hi: 3, c: "--ph-mild" },
+    { name: "Severe Depression", lo: 0, hi: 1, c: "--ph-severe" }
   ];
   function phaseOf(v) { for (var i = 0; i < PHASES.length; i++) if (v >= PHASES[i].lo && v <= PHASES[i].hi) return PHASES[i]; return PHASES[2]; }
-  function col(v) { return "var(" + phaseOf(v).c + ")"; }
+  function col(v) { return "var(" + phaseOf(v).c + ")"; }        // fill
+  function ink(v) { return "var(" + phaseOf(v).c + "-ink)"; }    // text on the page
+  function on(v) { return "var(" + phaseOf(v).c + "-on)"; }      // text on the fill
 
   // ---------- Storage ----------
   var KEY = "mood.entries.v1", SKEY = "mood.settings.v1";
@@ -76,34 +78,29 @@
       low: r.filter(function (x) { return x <= 3; }).length, sd: sd, swing: swing };
   }
 
+  // Squared grid (one row per rating), a circle per day and a thin line through the centres.
   function chartSVG(ds, y, m) {
-    var W = 340, H = 210, L = 24, R = 8, T = 8, B = 22, n = daysIn(y, m);
-    function x(day) { return L + (day - 0.5) / n * (W - L - R); }
-    function yy(v) { return T + (10 - v) / 10 * (H - T - B); }
+    var L = 24, T = 8, B = 22, cell = 20, cols = 15, n = daysIn(y, m), W = L + cols * cell + 8, H = T + 10 * cell + B;
+    function x(day) { return L + (day - 0.5) / n * cols * cell; }
+    function yy(v) { return T + (10 - v) * cell; }
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Mood graph for ' + monthTitle(y, m) + '">';
-    s += '<rect x="' + L + '" y="' + yy(6.5) + '" width="' + (W - L - R) + '" height="' + (yy(3.5) - yy(6.5)) + '" fill="var(--green)" fill-opacity="0.13"/>';
-    [0, 2, 4, 6, 8, 10].forEach(function (v) {
-      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy(v) + '" y2="' + yy(v) + '" stroke="var(--sep)" stroke-width="0.6"/>';
-      s += '<text x="' + (L - 6) + '" y="' + (yy(v) + 3.5) + '" text-anchor="end" font-size="10" fill="var(--label2)">' + v + '</text>';
-    });
-    [1, 8, 15, 22, 29].forEach(function (d) {
-      if (d > n) return;
-      s += '<line x1="' + x(d) + '" x2="' + x(d) + '" y1="' + T + '" y2="' + (H - B) + '" stroke="var(--sep)" stroke-width="0.6" stroke-dasharray="2 3"/>';
-      s += '<text x="' + x(d) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--label2)">' + d + '</text>';
-    });
-    var pts = ds.map(function (p) { return [x(p.d.getDate()), yy(p.r)]; });
-    if (pts.length > 1) {
-      var d = "M" + pts[0][0].toFixed(1) + "," + pts[0][1].toFixed(1);
-      for (var i = 0; i < pts.length - 1; i++) {
-        var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2, k = 0.16;
-        var lo = Math.min(p1[1], p2[1]), hi = Math.max(p1[1], p2[1]);
-        var c1y = Math.min(Math.max(p1[1] + (p2[1] - p0[1]) * k, lo), hi);
-        var c2y = Math.min(Math.max(p2[1] - (p3[1] - p1[1]) * k, lo), hi);
-        d += " C" + (p1[0] + (p2[0] - p0[0]) * k).toFixed(1) + "," + c1y.toFixed(1) + " " + (p2[0] - (p3[0] - p1[0]) * k).toFixed(1) + "," + c2y.toFixed(1) + " " + p2[0].toFixed(1) + "," + p2[1].toFixed(1);
-      }
-      s += '<path d="' + d + '" fill="none" stroke="var(--gray)" stroke-opacity="0.6" stroke-width="2"/>';
+    s += '<rect x="' + L + '" y="' + T + '" width="' + cols * cell + '" height="' + 10 * cell + '" fill="var(--bg)"/>';
+    for (var c = 0; c <= cols; c++) s += '<line x1="' + (L + c * cell) + '" x2="' + (L + c * cell) + '" y1="' + T + '" y2="' + yy(0) + '" stroke="var(--sep)" stroke-width="0.6"/>';
+    for (var v = 0; v <= 10; v++) {
+      s += '<line x1="' + L + '" x2="' + (L + cols * cell) + '" y1="' + yy(v) + '" y2="' + yy(v) + '" stroke="var(--sep)" stroke-width="0.6"/>';
+      if (v % 2 === 0) s += '<text x="' + (L - 6) + '" y="' + (yy(v) + 3.5) + '" text-anchor="end" font-size="10" fill="var(--label2)">' + v + '</text>';
     }
-    ds.forEach(function (p, i) { s += '<circle cx="' + pts[i][0].toFixed(1) + '" cy="' + pts[i][1].toFixed(1) + '" r="4.6" fill="' + col(p.r) + '"/>'; });
+    [1, 8, 15, 22, 29].forEach(function (d) {
+      if (d <= n) s += '<text x="' + x(d) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="var(--label2)">' + d + '</text>';
+    });
+    var byDay = {};
+    ds.forEach(function (p) { byDay[p.d.getDate()] = p.r; });
+    ds.forEach(function (p) { s += '<circle cx="' + x(p.d.getDate()).toFixed(1) + '" cy="' + yy(p.r) + '" r="6.5" fill="' + col(p.r) + '"/>'; });
+    for (var d = 1; d < n; d++) {
+      if (byDay[d] == null) continue;
+      var to = byDay[d + 1] != null ? d + 1 : (byDay[d + 2] != null ? d + 2 : 0);
+      if (to) s += '<line x1="' + x(d).toFixed(1) + '" y1="' + yy(byDay[d]) + '" x2="' + x(to).toFixed(1) + '" y2="' + yy(byDay[to]) + '" stroke="var(--label)" stroke-width="1.1" stroke-linecap="round"' + (to === d + 2 ? ' stroke-dasharray="2.5 3"' : "") + "/>";
+    }
     return s + "</svg>";
   }
 
@@ -129,8 +126,8 @@
 
   function dayHTML(p, asButton) {
     var tag = asButton ? 'button type="button" data-day="' + p.k + '"' : "div";
-    return "<" + tag + ' class="day"><span class="badge" style="background:' + col(p.r) + '">' + p.r + '</span><span><div class="when">' +
-      p.d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) + '</div><div class="ph" style="color:' + col(p.r) + '">' + phaseOf(p.r).name + "</div>" +
+    return "<" + tag + ' class="day"><span class="badge" style="background:' + col(p.r) + ';color:' + on(p.r) + '">' + p.r + '</span><span><div class="when">' +
+      p.d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }) + '</div><div class="ph" style="color:' + ink(p.r) + '">' + phaseOf(p.r).name + "</div>" +
       (p.n ? '<div class="nt">' + esc(p.n) + "</div>" : "") + "</span></" + (asButton ? "button" : "div") + ">";
   }
 
@@ -170,17 +167,17 @@
 
   function renderToday() {
     Array.prototype.forEach.call(grid.children, function (b, v) {
-      var on = v === selected;
-      b.setAttribute("aria-pressed", on ? "true" : "false");
-      b.style.background = on ? col(v) : "color-mix(in srgb, " + col(v) + " 15%, transparent)";
-      b.style.color = on ? "#fff" : col(v);
+      var isOn = v === selected;
+      b.setAttribute("aria-pressed", isOn ? "true" : "false");
+      b.style.background = isOn ? col(v) : "color-mix(in srgb, " + col(v) + " 15%, transparent)";
+      b.style.color = isOn ? on(v) : ink(v);
     });
     var slot = $("level-slot");
     if (selected === null) slot.innerHTML = "";
     else {
-      var c = col(selected);
-      slot.innerHTML = '<div class="level" style="background:color-mix(in srgb, ' + c + ' 12%, transparent)"><span class="num" style="color:' + c + '">' + selected +
-        '</span><div><div class="phase" style="color:' + c + '">' + phaseOf(selected).name + "</div><p>" + SCALE[selected] + "</p></div></div>";
+      var c = col(selected), t = ink(selected);
+      slot.innerHTML = '<div class="level" style="background:color-mix(in srgb, ' + c + ' 16%, transparent)"><span class="num" style="color:' + t + '">' + selected +
+        '</span><div><div class="phase" style="color:' + t + '">' + phaseOf(selected).name + "</div><p>" + SCALE[selected] + "</p></div></div>";
     }
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
@@ -253,7 +250,14 @@
       '<button class="btn-prom" type="button" id="print-report">Save as PDF</button>';
   }
   // The PDF library is only loaded once a report is opened, so the PDF is ready by the time a button is tapped.
-  var pdfLib = null;
+  var pdfLib = null, pdfFonts = null;
+  function fontB64(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error(url); return r.arrayBuffer(); }).then(function (buf) {
+      var b = new Uint8Array(buf), str = "";
+      for (var i = 0; i < b.length; i += 0x8000) str += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+      return btoa(str);
+    });
+  }
   function loadPDF() {
     if (!pdfLib) pdfLib = new Promise(function (ok, fail) {
       var n = 0;
@@ -264,12 +268,15 @@
         document.head.appendChild(s);
       });
     });
+    // DM Sans for the PDF; if it can't load, the PDF falls back to Helvetica.
+    if (!pdfFonts) Promise.all([fontB64("fonts/DMSans-Regular.ttf"), fontB64("fonts/DMSans-Bold.ttf")])
+      .then(function (f) { pdfFonts = { regular: f[0], bold: f[1] }; }, function () {});
     return pdfLib;
   }
   function reportFile(y, m) {
     var t = today();
     var doc = window.buildReportPDF(window.jspdf.jsPDF, {
-      year: y, month: m + 1, today: { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() },
+      year: y, month: m + 1, fonts: pdfFonts, today: { year: t.getFullYear(), month: t.getMonth() + 1, day: t.getDate() },
       days: monthDays(y, m).map(function (p) { return { day: p.d.getDate(), rating: p.r, note: p.n }; })
     });
     var name = "Mood report " + monthTitle(y, m) + ".pdf";
@@ -333,7 +340,7 @@
   $("version").textContent = "Version " + VERSION;
 
   $("scale-list").innerHTML = SCALE.map(function (d, v) { return [v, d]; }).reverse().map(function (s) {
-    return '<div class="scale-item"><span class="badge" style="background:' + col(s[0]) + '">' + s[0] + '</span><div><div class="ph" style="color:' + col(s[0]) + '">' + phaseOf(s[0]).name + "</div><p>" + s[1] + "</p></div></div>";
+    return '<div class="scale-item"><span class="badge" style="background:' + col(s[0]) + ';color:' + on(s[0]) + '">' + s[0] + '</span><div><div class="ph" style="color:' + ink(s[0]) + '">' + phaseOf(s[0]).name + "</div><p>" + s[1] + "</p></div></div>";
   }).join("");
   $("open-scale").addEventListener("click", function () { $("settings-main").hidden = true; $("settings-scale").hidden = false; window.scrollTo(0, 0); });
   $("close-scale").addEventListener("click", function () { $("settings-main").hidden = false; $("settings-scale").hidden = true; });

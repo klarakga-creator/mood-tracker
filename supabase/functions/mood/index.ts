@@ -140,8 +140,25 @@ export function reportHTML(y: number, m: number, days: { day: string; rating: nu
 // ---------- PDF report ----------
 // The PDF layout lives in the app's report-pdf.js; it is loaded from the live app when this function is deployed.
 type ReportDay = { day: number; rating: number; note: string };
-type ReportData = { year: number; month: number; days: ReportDay[]; today?: { year: number; month: number; day: number } };
+type ReportData = { year: number; month: number; days: ReportDay[]; fonts?: { regular: string; bold: string }; today?: { year: number; month: number; day: number } };
 const buildReportPDF = (globalThis as unknown as { buildReportPDF: (lib: typeof jsPDF, data: ReportData) => jsPDF }).buildReportPDF;
+
+// DM Sans from the live app; if it can't be fetched the PDF uses Helvetica.
+let fontCache: { regular: string; bold: string } | undefined;
+async function reportFonts() {
+  if (fontCache) return fontCache;
+  try {
+    const get = async (f: string) => {
+      const r = await fetch(APP_URL + "fonts/" + f);
+      if (!r.ok) throw new Error(f);
+      return toBase64(await r.arrayBuffer());
+    };
+    fontCache = { regular: await get("DMSans-Regular.ttf"), bold: await get("DMSans-Bold.ttf") };
+  } catch (e) {
+    console.error("font fetch failed", (e as Error).message);
+  }
+  return fontCache;
+}
 
 function toBase64(buf: ArrayBuffer) {
   const bytes = new Uint8Array(buf);
@@ -159,7 +176,7 @@ async function sendReport(userId: string, email: string, y: number, m: number) {
   if (error) return { ok: false, error: error.message };
   const title = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
   const t = new Date();
-  const doc = buildReportPDF(jsPDF, { year: y, month: m, today: { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() }, days: (data ?? []).map((d) => ({ day: +d.day.slice(8, 10), rating: d.rating, note: d.note })) });
+  const doc = buildReportPDF(jsPDF, { year: y, month: m, fonts: await reportFonts(), today: { year: t.getUTCFullYear(), month: t.getUTCMonth() + 1, day: t.getUTCDate() }, days: (data ?? []).map((d) => ({ day: +d.day.slice(8, 10), rating: d.rating, note: d.note })) });
   const pdf = toBase64(doc.output("arraybuffer"));
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

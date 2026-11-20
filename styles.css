@@ -1,18 +1,28 @@
-/* iOS-style look. Colours are Apple's system colours, with dark mode. */
+/* iOS-style layout. Phase colours (--ph-*) come from Klara's chosen palette; each has a fill, an -ink for text and an -on for text on the fill. */
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-SemiBold.ttf") format("truetype"); font-weight: 500 600; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("fonts/DMSans-Bold.ttf") format("truetype"); font-weight: 700 900; font-display: swap; }
 :root {
-  --bg: #FFFFFF; --label: #000000; --label2: rgba(60,60,67,.6); --fill: rgba(118,118,128,.12); --fill2: rgba(118,118,128,.08);
-  --grouped: #F2F2F7; --cell: #FFFFFF; --sep: rgba(60,60,67,.18); --glass: rgba(255,255,255,.72); --glass-edge: rgba(0,0,0,.08);
-  --blue: #007AFF; --indigo: #5856D6; --green: #34C759; --orange: #FF9500; --red: #FF3B30; --gray: #8E8E93;
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --font-round: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, sans-serif;
+  --bg: #F5F1EB; --label: #2E2B28; --label2: rgba(60,60,67,.6); --fill: rgba(118,118,128,.12); --fill2: rgba(118,118,128,.08);
+  --grouped: #ECE7E0; --cell: #FFFFFF; --sep: rgba(60,60,67,.18); --glass: rgba(255,255,255,.72); --glass-edge: rgba(0,0,0,.08);
+  --blue: #2E2B28; --red: #9E3F3C; --gray: #8E8E93; --on-accent: #FFFFFF;
+  --ph-mania: #B44E4B; --ph-mania-ink: #9E3F3C; --ph-mania-on: #FFFFFF;
+  --ph-hypo: #D47F50; --ph-hypo-ink: #B5612F; --ph-hypo-on: #FFFFFF;
+  --ph-bal: #3E635C; --ph-bal-ink: #3E635C; --ph-bal-on: #FFFFFF;
+  --ph-mild: #D8A5C0; --ph-mild-ink: #A8628A; --ph-mild-on: #2E2B28;
+  --ph-severe: #848BBA; --ph-severe-ink: #5E66A0; --ph-severe-on: #FFFFFF;
+  --font: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font);
+  --font-round: var(--font);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000000; --label: #FFFFFF; --label2: rgba(235,235,245,.6); --fill: rgba(118,118,128,.24); --fill2: rgba(118,118,128,.16);
     --grouped: #000000; --cell: #1C1C1E; --sep: rgba(84,84,88,.6); --glass: rgba(40,40,44,.72); --glass-edge: rgba(255,255,255,.12);
-    --blue: #0A84FF; --indigo: #5E5CE6; --green: #30D158; --orange: #FF9F0A; --red: #FF453A; --gray: #8E8E93;
+    --blue: #F2EEE8; --red: #D9807C; --gray: #8E8E93; --on-accent: #1A1A1A;
+    --ph-mania-ink: #D9807C; --ph-hypo-ink: #E79A6F; --ph-bal: #5A8A80; --ph-bal-ink: #8DB8AE; --ph-mild-ink: #E3B9CF;
+    --ph-severe-ink: #A9AEDA;
     color-scheme: dark;
   }
 }
@@ -64,7 +74,7 @@ button { font: inherit; color: inherit; }
 .note { width: 100%; min-height: 86px; resize: vertical; font: inherit; font-size: 16px; color: var(--label); background: var(--fill); border: 0; border-radius: 14px; padding: 12px; }
 .note::placeholder { color: var(--label2); }
 .note:focus { outline: 2px solid var(--blue); }
-.btn-prom { font-size: 17px; font-weight: 600; border: 0; border-radius: 999px; padding: 15px; width: 100%; background: var(--blue); color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-prom { font-size: 17px; font-weight: 600; border: 0; border-radius: 999px; padding: 15px; width: 100%; background: var(--blue); color: var(--on-accent); cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
 .btn-prom:disabled { background: var(--fill); color: var(--label2); cursor: default; }
 .btn-plain-danger { border: 0; background: none; color: var(--red); font-size: 16px; cursor: pointer; padding: 6px; }
 
@@ -115,7 +125,7 @@ button.cell, label.cell.link { cursor: pointer; }
 .toggle input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
 .toggle span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill); transition: background .2s; }
 .toggle span::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform .2s; }
-.toggle input:checked + span { background: var(--green); }
+.toggle input:checked + span { background: var(--ph-bal); }
 .toggle input:checked + span::after { transform: translateX(20px); }
 .toggle input:focus-visible + span { outline: 2px solid var(--blue); outline-offset: 2px; }
 .back { display: flex; align-items: center; gap: 4px; color: var(--blue); background: none; border: 0; font-size: 17px; cursor: pointer; padding: 10px 0; }
