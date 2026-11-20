@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Mood</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mood">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <!-- Today -->
+    <section class="view" id="view-today" aria-label="Today">
+      <div class="content">
+        <h1 class="large-title" id="today-title">Today</h1>
+        <div class="stack">
+          <div class="stack tight">
+            <div class="row-between">
+              <label class="muted big" for="day">Day</label>
+              <input class="pill" type="date" id="day">
+            </div>
+            <h2 class="title2">How was your mood?</h2>
+            <p class="muted big">Tap a number to see what it means.</p>
+          </div>
+          <div class="grid6" id="rating-grid" role="group" aria-label="Mood rating"></div>
+          <div id="level-slot"></div>
+          <div class="stack tight">
+            <label class="headline" for="note">Note</label>
+            <textarea class="note" id="note" rows="3" placeholder="Sleep, medication, events, anything worth remembering"></textarea>
+          </div>
+          <button class="btn-prom" id="save" type="button" disabled></button>
+          <button class="btn-plain-danger" id="delete-day" type="button" hidden>Delete this day</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Month -->
+    <section class="view" id="view-month" aria-label="Month" hidden>
+      <div class="content">
+        <div class="navbar"><button class="glass-btn" id="open-report" type="button" aria-label="Monthly report">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 17l2.5-3 2 2 2.5-3.5"/></svg>
+        </button></div>
+        <h1 class="large-title">Month</h1>
+        <div class="stack">
+          <div class="month-switch">
+            <button class="round" id="prev-month" type="button" aria-label="Previous month"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>
+            <span class="month-label" id="month-label"></span>
+            <button class="round" id="next-month" type="button" aria-label="Next month"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>
+          </div>
+          <div id="month-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="view grouped" id="view-settings" aria-label="Settings" hidden>
+      <div class="content" id="settings-main">
+        <h1 class="large-title">Settings</h1>
+        <div class="stack loose">
+          <div>
+            <div class="group-h">Check-in</div>
+            <div class="group">
+              <label class="cell"><span>Daily reminder</span><span class="toggle"><input type="checkbox" id="s-daily"><span></span></span></label>
+              <label class="cell" id="time-cell"><span>Time</span><input class="pill" type="time" id="s-time" value="20:00"></label>
+            </div>
+            <div class="group-f" id="push-note">Reminders start working once sync is set up.</div>
+          </div>
+          <div>
+            <div class="group-h">Monthly report</div>
+            <div class="group">
+              <label class="cell"><span>Email it on the 1st</span><span class="toggle"><input type="checkbox" id="s-monthly"><span></span></span></label>
+              <div class="cell"><input type="email" id="s-email" placeholder="Email for reports" aria-label="Email for reports" autocomplete="email"></div>
+            </div>
+            <div class="group-f">On the 1st of each month, last month's report is emailed to this address. You can also open it any time from the Month tab.</div>
+          </div>
+          <div>
+            <div class="group-h">Sync</div>
+            <div class="group">
+              <div class="cell"><span>Status</span><span class="muted" id="sync-status">On this device only</span></div>
+            </div>
+            <div class="group-f">Your entries are saved on this device and work offline.</div>
+          </div>
+          <div>
+            <div class="group-h">The scale</div>
+            <div class="group"><button class="cell" id="open-scale" type="button"><span>What each number means</span><svg class="chev" viewBox="0 0 9 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1.5 1.5L7 7l-5.5 5.5"/></svg></button></div>
+          </div>
+          <div>
+            <div class="group-h">Backup</div>
+            <div class="group">
+              <button class="cell link" id="export" type="button">Export my data</button>
+              <label class="cell link" for="import">Import a backup<input type="file" id="import" accept="application/json" hidden></label>
+            </div>
+          </div>
+          <p class="version muted" id="version"></p>
+        </div>
+      </div>
+      <div class="content" id="settings-scale" hidden>
+        <div class="navbar left"><button class="back" id="close-scale" type="button"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L2 10l8 8"/></svg>Settings</button></div>
+        <h1 class="large-title">Mood scale</h1>
+        <div class="group" id="scale-list"></div>
+      </div>
+    </section>
+
+    <nav class="tabbar" role="tablist" aria-label="Tabs">
+      <button type="button" role="tab" data-tab="today" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>Today</button>
+      <button type="button" role="tab" data-tab="month" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M6.5 15l4-5 3.5 3 5-7"/></svg>Month</button>
+      <button type="button" role="tab" data-tab="settings" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</button>
+    </nav>
+
+    <!-- Report -->
+    <div class="sheet" id="sheet" hidden>
+      <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <div class="sheet-top">
+          <button class="link strong" id="sheet-share" type="button">Share</button>
+          <span class="sheet-title" id="sheet-title">Report</span>
+          <button class="link strong" id="sheet-done" type="button">Done</button>
+        </div>
+        <div class="sheet-scroll"><article class="paper" id="paper"></article></div>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
