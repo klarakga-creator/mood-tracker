@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.11.0";
+  var VERSION = "1.11.1";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -210,6 +210,7 @@
     renderStreak();
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
+    saveBtn.hidden = selected === null;
     var label = savedRating === null ? "Save" : (changed ? "Update" : "Saved");
     saveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg>' + label;
     $("delete-day").hidden = savedRating === null;
