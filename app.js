@@ -155,7 +155,7 @@
     rateBtns.push(b);
   });
   // Rating: dots on a line in rows, with the phase names underneath each row.
-  var ROWS = (location.search.match(/rows=([23])/) || [])[1] === "3" ? [[0, 3], [4, 6], [7, 10]] : [[0, 5], [6, 10]];
+  var ROWS = [[0, 3], [4, 6], [7, 10]]; // low, balanced, high
   var SHORT = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" };
   grid.classList.add("rows-" + ROWS.length);
   ROWS.forEach(function (r) {
