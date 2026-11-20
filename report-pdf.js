@@ -48,6 +48,7 @@
     for (var d = 1; d <= dim; d++) if (byDay[d]) days.push(byDay[d]);
     var rs = days.map(function (x) { return x.rating; }), n = rs.length;
     var avg = n ? rs.reduce(function (a, b) { return a + b; }, 0) / n : 0;
+    var sd = n ? Math.sqrt(rs.reduce(function (a, b) { return a + (b - avg) * (b - avg); }, 0) / n) : 0;
     function count(f) { return rs.filter(f).length; }
     function inPhase(p) { return count(function (v) { return v >= p.lo && v <= p.hi; }); }
     function weekday(day) { return new Date(Date.UTC(Y, M - 1, day)).getUTCDay(); }
@@ -165,11 +166,12 @@
       }
     }
 
-    // Three tiles
+    // Four tiles
     var tiles = [["Balanced days", String(count(function (v) { return v >= 4 && v <= 6; })), "rated 4 to 6"],
       ["High days", String(count(function (v) { return v >= 7; })), "rated 7 or more"],
-      ["Low days", String(count(function (v) { return v <= 3; })), "rated 3 or less"]];
-    var tg = 3, twd = (W - tg * 2) / 3, ty = 192;
+      ["Low days", String(count(function (v) { return v <= 3; })), "rated 3 or less"],
+      ["Variability", n ? sd.toFixed(1) : "-", "lower means steadier"]];
+    var tg = 3, twd = (W - tg * 3) / 4, ty = 192;
     tiles.forEach(function (t, i) {
       var x = L + i * (twd + tg);
       fill("#F5F5F8"); doc.roundedRect(x, ty, twd, 21, 4, 4, "F");
