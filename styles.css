@@ -78,6 +78,20 @@ button { font: inherit; color: inherit; }
 .rate:focus-visible, .btn-prom:focus-visible, .round:focus-visible, .glass-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
 .level { --c: var(--ph-bal); --on: #fff; padding: 14px 16px 18px; border-radius: 26px; background: var(--c); color: var(--on); animation: pop .25s ease both; }
+.ring.more { background: none; color: inherit; cursor: pointer; padding: 0; }
+.ring.more:active { transform: scale(.94); }
+.ring.more:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.sheet-panel.info-panel { background: var(--bg); }
+#info-body { display: grid; gap: 12px; padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 28px); }
+.info-hero { --c: var(--ph-bal); --on: #fff; background: var(--c); color: var(--on); border-radius: 26px; padding: 18px 18px 20px; }
+.info-range { font-size: 46px; line-height: .95; letter-spacing: -0.04em; display: block; margin-bottom: 14px; }
+.info-hero .phase { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 6px; }
+.info-hero p { margin: 0; font-size: 15.5px; line-height: 1.4; opacity: .85; }
+.info-card { background: var(--tile); border-radius: 22px; padding: 16px 18px; }
+.info-card h3 { margin: 0 0 8px; font-size: 17px; font-weight: 700; }
+.info-card ul { margin: 0; padding-left: 20px; display: grid; gap: 7px; font-size: 15.5px; line-height: 1.38; }
+.info-src a { display: block; color: var(--label); font-size: 15px; font-weight: 500; padding: 5px 0; text-decoration: underline; text-underline-offset: 3px; }
+.info-src .caption { margin: 8px 0 0; }
 .level-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
 .ring { width: 44px; height: 44px; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, currentColor 55%, transparent); display: grid; place-items: center; font-size: 21px; font-weight: 700; }
 .level .phase { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; margin: 0 0 6px; }
