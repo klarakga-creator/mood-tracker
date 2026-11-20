@@ -96,6 +96,27 @@ button { font: inherit; color: inherit; }
 .streak-n { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, currentColor 55%, transparent); display: grid; place-items: center; font-size: 15px; font-weight: 700; }
 .streak-t { flex: 1; font-size: 15px; font-weight: 600; }
 .streak-more { font-size: 14px; font-weight: 600; opacity: .85; }
+/* Layout previews */
+.rate-grid.lay-a { grid-template-columns: repeat(12, minmax(0,1fr)); gap: 10px 6px; }
+.rate-grid.lay-a .rate { grid-column: span 2; max-width: 54px; font-size: 22px; }
+.rate-grid.lay-a .rate:nth-child(7) { grid-column: 2 / span 2; }
+.rate-grid.lay-b { display: grid; grid-template-columns: 1fr; gap: 8px; justify-items: stretch; }
+.rate-grid.lay-b.picked .rate { background: var(--bg); }
+.rate-grid.lay-b.picked .rate[aria-pressed="true"] { background: var(--c); }
+.rate-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 6px 6px 16px; border-radius: 999px; background: var(--tile); }
+.rate-label { font-size: 15px; font-weight: 700; }
+.rate-dots { display: flex; gap: 6px; }
+.rate-grid.lay-b .rate { width: 44px; max-width: none; font-size: 19px; }
+.rate-grid.lay-c { display: grid; grid-template-columns: 1fr; gap: 8px; justify-items: stretch; }
+.rate-bar { display: flex; gap: 3px; }
+.rate-grid.lay-c .rate { flex: 1 1 0; min-width: 0; padding: 0; width: auto; max-width: none; aspect-ratio: auto; height: 64px; border-radius: 6px; font-size: 19px; }
+.rate-grid.lay-c .rate:first-child { border-radius: 18px 6px 6px 18px; }
+.rate-grid.lay-c .rate:last-child { border-radius: 6px 18px 18px 6px; }
+.rate-grid.lay-c.picked .rate[aria-pressed="true"] { transform: scaleY(1.12); }
+.rate-ends { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--label2); padding: 0 4px; }
+.rate-grid.lay-d { grid-template-columns: repeat(8, minmax(0,1fr)); }
+.rate-grid.lay-d .rate { grid-column: span 2; }
+.rate-grid.lay-d .rate:nth-child(9) { grid-column: 2 / span 2; }
 .level-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
 .ring { width: 44px; height: 44px; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, currentColor 55%, transparent); display: grid; place-items: center; font-size: 21px; font-weight: 700; }
 .level .phase { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.08; margin: 0 0 6px; }

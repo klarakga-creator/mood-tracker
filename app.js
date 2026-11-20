@@ -145,14 +145,31 @@
   // ---------- Today ----------
   var day = today(), selected = null, tapped = false, savedRating = null, savedNote = "";
   var grid = $("rating-grid"), noteEl = $("note"), saveBtn = $("save"), dayInput = $("day");
+  var rateBtns = [];
   SCALE.forEach(function (_, v) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "rate"; b.textContent = v;
     b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
     b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
-    grid.appendChild(b);
+    rateBtns.push(b);
   });
+  // Layout preview switch (?layout=a|b|c|d) - removed once Klara picks one.
+  var LAYOUT = (location.search.match(/layout=([a-d])/) || [])[1] || "";
+  if (LAYOUT) grid.classList.add("lay-" + LAYOUT);
+  if (LAYOUT === "b") {
+    PHASES.slice().reverse().forEach(function (p) {
+      var row = document.createElement("div"); row.className = "rate-row";
+      row.innerHTML = '<span class="rate-label" style="color:' + ink(p.lo) + '">' + p.name.replace("Mild to Moderate ", "Mild ") + "</span>";
+      var dots = document.createElement("div"); dots.className = "rate-dots";
+      for (var v = p.lo; v <= p.hi; v++) dots.appendChild(rateBtns[v]);
+      row.appendChild(dots); grid.appendChild(row);
+    });
+  } else if (LAYOUT === "c") {
+    var bar = document.createElement("div"); bar.className = "rate-bar";
+    rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
+    var lab = document.createElement("div"); lab.className = "rate-ends"; lab.innerHTML = "<span>Low</span><span>Balanced</span><span>High</span>"; grid.appendChild(lab);
+  } else rateBtns.forEach(function (b) { grid.appendChild(b); });
 
   function setDay(d) {
     day = d; tapped = false;
@@ -169,7 +186,7 @@
 
   function renderToday() {
     grid.classList.toggle("picked", tapped && selected !== null);
-    Array.prototype.forEach.call(grid.children, function (b, v) {
+    rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
     var slot = $("level-slot");
