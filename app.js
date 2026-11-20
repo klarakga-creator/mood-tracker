@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.6.0";
+  var VERSION = "1.6.1";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -143,19 +143,19 @@
   tabs.forEach(function (t) { t.addEventListener("click", function () { showTab(t.dataset.tab); }); });
 
   // ---------- Today ----------
-  var day = today(), selected = null, savedRating = null, savedNote = "";
+  var day = today(), selected = null, tapped = false, savedRating = null, savedNote = "";
   var grid = $("rating-grid"), noteEl = $("note"), saveBtn = $("save"), dayInput = $("day");
   SCALE.forEach(function (_, v) {
     var b = document.createElement("button");
     b.type = "button"; b.className = "rate"; b.textContent = v;
     b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
-    b.addEventListener("click", function () { selected = v; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
+    b.addEventListener("click", function () { selected = v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     grid.appendChild(b);
   });
 
   function setDay(d) {
-    day = d;
+    day = d; tapped = false;
     var e = entries[keyOf(d)];
     if (e && !e.deleted) { selected = e.rating; noteEl.value = e.note || ""; savedRating = e.rating; savedNote = e.note || ""; }
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
@@ -168,7 +168,7 @@
   }
 
   function renderToday() {
-    grid.classList.toggle("picked", selected !== null);
+    grid.classList.toggle("picked", tapped && selected !== null);
     Array.prototype.forEach.call(grid.children, function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
