@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.8.0";
+  var VERSION = "1.9.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -154,59 +154,27 @@
     b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     rateBtns.push(b);
   });
-  // Layout preview switch (?layout=a|b|c|d) - removed once Klara picks one.
-  var LAYOUT = (location.search.match(/layout=(c[2-5]|[a-d])/) || [])[1] || "";
-  if (LAYOUT) grid.classList.add("lay-" + LAYOUT);
-  if (LAYOUT === "b") {
-    PHASES.slice().reverse().forEach(function (p) {
-      var row = document.createElement("div"); row.className = "rate-row";
-      row.innerHTML = '<span class="rate-label" style="color:' + ink(p.lo) + '">' + p.name.replace("Mild to Moderate ", "Mild ") + "</span>";
-      var dots = document.createElement("div"); dots.className = "rate-dots";
-      for (var v = p.lo; v <= p.hi; v++) dots.appendChild(rateBtns[v]);
-      row.appendChild(dots); grid.appendChild(row);
-    });
-  } else if (LAYOUT.charAt(0) === "c") {
-    var bar = document.createElement("div"); bar.className = "rate-bar";
-    rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
-    if (LAYOUT === "c") grid.classList.add("lay-c");
-    if (LAYOUT === "c4") {
-      var g = document.createElement("div"); g.className = "rate-groups";
-      PHASES.slice().reverse().forEach(function (p) {
-        var x = document.createElement("span"); x.style.gridColumn = "span " + (p.hi - p.lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
-        x.textContent = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" }[p.name];
-        g.appendChild(x);
-      });
-      grid.appendChild(g);
-    } else { var lab = document.createElement("div"); lab.className = "rate-ends"; lab.innerHTML = "<span>Low</span><span>Balanced</span><span>High</span>"; grid.appendChild(lab); }
-  } else rateBtns.forEach(function (b) { grid.appendChild(b); });
+  // Rating: dots on a line, with the phase names underneath.
+  var bar = document.createElement("div"); bar.className = "rate-bar";
+  rateBtns.forEach(function (b) { bar.appendChild(b); }); grid.appendChild(bar);
+  var groups = document.createElement("div"); groups.className = "rate-groups";
+  PHASES.slice().reverse().forEach(function (p) {
+    var x = document.createElement("span"); x.style.gridColumn = "span " + (p.hi - p.lo + 1); x.style.setProperty("--c", col(p.lo)); x.style.color = ink(p.lo);
+    x.textContent = { "Severe Depression": "Severe", "Mild to Moderate Depression": "Mild", "Balanced Mood": "Balanced", "Hypomania": "Hypo", "Mania": "Mania" }[p.name];
+    groups.appendChild(x);
+  });
+  grid.appendChild(groups);
 
-  // Note preview switch (?note=1|2)
-  var NOTE = (location.search.match(/note=([12])/) || [])[1] || "";
-  if (NOTE) {
-    var card = noteEl.parentNode; card.classList.add("note-v" + NOTE);
-    if (NOTE === "1") {
-      card.querySelector("label").outerHTML = '<div class="note-head"><label class="headline" for="note">Note</label><span class="muted">Optional</span></div>';
-      var chips = document.createElement("div"); chips.className = "chips";
-      ["Sleep", "Medication", "Exercise", "Social", "Work", "Stress"].forEach(function (t) {
-        var c = document.createElement("button"); c.type = "button"; c.className = "chip"; c.textContent = "+ " + t;
-        c.addEventListener("click", function () { var v = noteEl.value.replace(/\s+$/, ""); noteEl.value = (v ? v + "\n" : "") + t + ": "; noteEl.focus(); noteEl.setSelectionRange(noteEl.value.length, noteEl.value.length); renderToday(); grow(); });
-        chips.appendChild(c);
-      });
-      card.appendChild(chips);
-      noteEl.placeholder = "Anything worth remembering about today";
-    } else {
-      card.querySelector("label").outerHTML = '<div class="note-head"><span class="note-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></span><div><label class="headline" for="note">Note</label><div class="muted small">How did today go?</div></div><span class="note-count" id="note-count"></span></div>';
-      noteEl.placeholder = "Sleep, medication, events, anything worth remembering";
-    }
-    var grow = function () { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 84) + "px"; var nc = $("note-count"); if (nc) nc.textContent = noteEl.value.length ? noteEl.value.length + "" : ""; };
-    noteEl.addEventListener("input", grow); setTimeout(grow, 0);
-  }
+  // Note: grows as you type, with a character count.
+  function growNote() { noteEl.style.height = "auto"; noteEl.style.height = Math.max(noteEl.scrollHeight, 112) + "px"; $("note-count").textContent = noteEl.value.length ? String(noteEl.value.length) : ""; }
+  noteEl.addEventListener("input", growNote);
 
   function setDay(d) {
     day = d; tapped = false;
     var e = entries[keyOf(d)];
     if (e && !e.deleted) { selected = e.rating; noteEl.value = e.note || ""; savedRating = e.rating; savedNote = e.note || ""; }
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
+    growNote();
     dayInput.value = keyOf(d);
     dayInput.max = keyOf(today());
     var diff = Math.round((today() - d) / 864e5);
