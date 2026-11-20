@@ -82,11 +82,20 @@
             <div class="group-f">On the 1st of each month, last month's report is emailed to this address. You can also open it any time from the Month tab.</div>
           </div>
           <div>
-            <div class="group-h">Sync</div>
-            <div class="group">
-              <div class="cell"><span>Status</span><span class="muted" id="sync-status">On this device only</span></div>
+            <div class="group-h">Account and sync</div>
+            <div class="group" id="signed-out">
+              <div class="cell"><input type="email" id="a-email" placeholder="Email" aria-label="Email" autocomplete="username"></div>
+              <div class="cell"><input type="password" id="a-password" placeholder="Password" aria-label="Password" autocomplete="current-password"></div>
+              <button class="cell link" id="a-signin" type="button">Sign in</button>
+              <button class="cell link" id="a-signup" type="button">Create account</button>
             </div>
-            <div class="group-f">Your entries are saved on this device and work offline.</div>
+            <div class="group" id="signed-in" hidden>
+              <div class="cell"><span>Signed in</span><span class="muted" id="a-who"></span></div>
+              <div class="cell"><span>Status</span><span class="muted" id="sync-status">On this device only</span></div>
+              <button class="cell link" id="a-syncnow" type="button">Sync now</button>
+              <button class="cell link" id="a-signout" type="button">Sign out</button>
+            </div>
+            <div class="group-f" id="sync-foot">Sign in to keep your iPhone and Mac in sync. Your entries are always saved on this device too, and work offline.</div>
           </div>
           <div>
             <div class="group-h">The scale</div>
@@ -128,6 +137,9 @@
     </div>
     <div class="toast" id="toast" role="status" hidden></div>
   </main>
+  <script src="config.js"></script>
+  <script src="vendor/supabase.js"></script>
   <script src="app.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>

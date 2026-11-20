@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -36,7 +36,8 @@
   var settings = Object.assign({ daily: false, time: "20:00", monthly: false, email: "" }, load(SKEY, {}));
 
   function saveEntries() { store(KEY, entries); Sync.push(); }
-  function saveSettings() { store(SKEY, settings); Sync.pushSettings(); }
+  function persistOnly() { store(KEY, entries); store(SKEY, settings); }
+  function saveSettings() { settings.updatedAt = new Date().toISOString(); store(SKEY, settings); Sync.pushSettings(); }
 
   // Hooks filled in once Supabase is set up.
   var Sync = { push: function () {}, pushSettings: function () {}, status: "On this device only" };
@@ -274,17 +275,19 @@
   });
 
   // ---------- Settings ----------
-  $("s-daily").checked = settings.daily;
-  $("s-time").value = settings.time;
-  $("s-monthly").checked = settings.monthly;
-  $("s-email").value = settings.email;
   function syncTimeCell() { $("time-cell").hidden = !settings.daily; }
-  syncTimeCell();
+  function renderSettings() {
+    $("s-daily").checked = settings.daily;
+    $("s-time").value = settings.time;
+    $("s-monthly").checked = settings.monthly;
+    $("s-email").value = settings.email;
+    syncTimeCell();
+  }
+  renderSettings();
   $("s-daily").addEventListener("change", function (e) { settings.daily = e.target.checked; syncTimeCell(); saveSettings(); });
   $("s-time").addEventListener("change", function (e) { settings.time = e.target.value || "20:00"; saveSettings(); });
   $("s-monthly").addEventListener("change", function (e) { settings.monthly = e.target.checked; saveSettings(); });
   $("s-email").addEventListener("change", function (e) { settings.email = e.target.value.trim(); saveSettings(); });
-  $("sync-status").textContent = Sync.status;
   $("version").textContent = "Version " + VERSION;
 
   $("scale-list").innerHTML = SCALE.map(function (d, v) { return [v, d]; }).reverse().map(function (s) {
@@ -322,5 +325,8 @@
   });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 
-  window.MoodApp = { entries: function () { return entries; }, settings: function () { return settings; }, Sync: Sync, refresh: function () { setDay(day); renderMonth(); } };
+  window.MoodApp = {
+    entries: entries, settings: settings, Sync: Sync, toast: toast, persist: persistOnly,
+    refresh: function () { if (selected === savedRating && noteEl.value === savedNote) setDay(day); if (!$("view-month").hidden) renderMonth(); renderSettings(); }
+  };
 })();

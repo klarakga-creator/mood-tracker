@@ -104,9 +104,10 @@ button { font: inherit; color: inherit; }
 .cell { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 16px; font-size: 17px; position: relative; width: 100%; border: 0; background: none; text-align: left; cursor: default; }
 button.cell, label.cell.link { cursor: pointer; }
 .cell + .cell::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: 0.5px solid var(--sep); }
-.cell input[type="email"] { font: inherit; border: 0; background: transparent; color: var(--label); width: 100%; padding: 12px 0; }
-.cell input[type="email"]:focus { outline: none; }
+.cell input[type="email"], .cell input[type="password"] { font: inherit; border: 0; background: transparent; color: var(--label); width: 100%; padding: 12px 0; }
+.cell input[type="email"]:focus, .cell input[type="password"]:focus { outline: none; }
 .link { color: var(--blue); background: none; border: 0; cursor: pointer; padding: 0; }
+.cell.link { padding: 0 16px; }
 .link.strong { font-weight: 600; font-size: 17px; }
 .chev { color: var(--label2); width: 9px; height: 14px; }
 .toggle { position: relative; width: 51px; height: 31px; flex: none; }

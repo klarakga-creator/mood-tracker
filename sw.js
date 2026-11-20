@@ -1,7 +1,7 @@
 // Offline support. Files come from the network when online (so updates show up
 // the next time the app opens) and from this cache when offline.
-const CACHE = "mood-v1";
-const SHELL = ["./", "index.html", "styles.css", "app.js", "manifest.webmanifest",
+const CACHE = "mood-v2";
+const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "config.js", "vendor/supabase.js", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", (e) => {
