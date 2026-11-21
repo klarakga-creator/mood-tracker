@@ -124,7 +124,7 @@ button { font: inherit; color: inherit; }
 .note-ico { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1.5px dotted color-mix(in srgb, var(--label) 75%, transparent); display: grid; place-items: center; }
 .note-sub { font-size: 15px; color: var(--label2); }
 .note-count { margin-left: auto; font-size: 13px; color: var(--label2); font-variant-numeric: tabular-nums; }
-.note { display: block; width: 100%; min-height: 44px; resize: none; overflow: hidden; font: inherit; font-size: 15px; line-height: 1.4; color: var(--label); border: 0; border-radius: 14px; padding: 11px 14px; background: var(--bg); }
+.note { display: block; width: 100%; min-height: 44px; resize: none; overflow: hidden; font: inherit; font-size: 16px; line-height: 1.4; color: var(--label); border: 0; border-radius: 14px; padding: 11px 14px; background: var(--bg); }
 .note::placeholder { color: var(--label2); }
 .note:focus { outline: none; }
 .note-card:focus-within { box-shadow: 0 0 0 2px var(--label); }

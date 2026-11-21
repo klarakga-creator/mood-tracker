@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.12.0";
+  var VERSION = "1.12.1";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -143,7 +143,7 @@
   tabs.forEach(function (t) { t.addEventListener("click", function () { showTab(t.dataset.tab); }); });
 
   // ---------- Today ----------
-  var day = today(), selected = null, tapped = false, savedRating = null, savedNote = "";
+  var day = today(), selected = null, tapped = false, shownLevel = null, savedRating = null, savedNote = "";
   var grid = $("rating-grid"), noteEl = $("note"), saveBtn = $("save"), dayInput = $("day");
   var rateBtns = [];
   SCALE.forEach(function (_, v) {
@@ -176,7 +176,7 @@
   noteEl.addEventListener("input", growNote);
 
   function setDay(d) {
-    day = d; tapped = false;
+    day = d; tapped = false; shownLevel = null;
     var e = entries[keyOf(d)];
     if (e && !e.deleted) { selected = e.rating; noteEl.value = e.note || ""; savedRating = e.rating; savedNote = e.note || ""; }
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
@@ -200,7 +200,8 @@
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
     });
     var slot = $("level-slot");
-    if (selected !== null) {
+    if (selected !== null && selected !== shownLevel) {
+      shownLevel = selected;
       var dir = selected > 6 ? "up" : selected < 4 ? "down" : "level";
       var arrow = { up: "M7 17L17 7M8.5 7H17v8.5", level: "M5 12h14M13 6l6 6-6 6", down: "M7 7l10 10M17 8.5V17H8.5" }[dir];
       slot.innerHTML = '<div class="level" style="--c:' + col(selected) + ';--on:' + on(selected) + '">' +
@@ -209,6 +210,10 @@
         '<div class="phase">' + phaseOf(selected).name + '</div><p>' + SCALE[selected] + '</p></div>';
     }
     renderStreak();
+    renderSave();
+  }
+
+  function renderSave() {
     var changed = selected !== savedRating || noteEl.value !== savedNote;
     saveBtn.disabled = selected === null || !changed;
     var label = savedRating === null ? "Save" : (changed ? "Update" : "Saved");
@@ -216,7 +221,7 @@
     $("delete-day").hidden = savedRating === null;
   }
 
-  noteEl.addEventListener("input", renderToday);
+  noteEl.addEventListener("input", renderSave);
   dayInput.addEventListener("change", function () { if (dayInput.value) setDay(parseKey(dayInput.value)); });
   saveBtn.addEventListener("click", function () {
     if (selected === null) return;
