@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.12.1";
+  var VERSION = "1.12.2";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [

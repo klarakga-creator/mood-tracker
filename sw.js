@@ -1,6 +1,6 @@
 // Offline-first: files come straight from this cache so the app opens instantly,
 // and a fresh copy is fetched in the background (updates show on the next open).
-const CACHE = "mood-v25";
+const CACHE = "mood-v26";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "sync.js", "push.js", "config.js", "vendor/supabase.js", "vendor/jspdf.umd.min.js", "report-pdf.js", "fonts/DMSans-Regular.ttf", "fonts/DMSans-SemiBold.ttf", "fonts/DMSans-Bold.ttf", "fonts/DMSans-Regular.woff2", "fonts/DMSans-SemiBold.woff2", "fonts/DMSans-Bold.woff2", "manifest.webmanifest",
   "icons/apple-touch-icon.png", "icons/icon-192.png", "icons/icon-512.png"];
 
