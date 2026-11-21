@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.13.0";
+  var VERSION = "1.14.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -196,8 +196,17 @@
     var after = $("after-pick"), wasClosed = after.classList.contains("closed");
     after.classList.toggle("closed", !open);
     after.inert = !open;
-    var pill = $("saved-pill");
-    pill.hidden = editing || savedRating === null;
+    var pill = $("saved-pill"), logged = !editing && savedRating !== null;
+    pill.hidden = true;
+    $("view-today").classList.toggle("logged", logged);
+    $("logged-card").hidden = !logged;
+    if (logged) {
+      var dd = Math.round((today() - day) / 864e5);
+      var which = dd === 0 ? "Today" : dd === 1 ? "Yesterday" : day.toLocaleDateString("en-GB", { weekday: "long" });
+      $("logged-title").textContent = which + " has been logged";
+      $("logged-sub").innerHTML = '<span class="logged-dot" style="--c:' + col(savedRating) + ';--on:' + on(savedRating) + '">' + savedRating + '</span>' + phaseOf(savedRating).name;
+      $("logged-edit").textContent = dd === 0 ? "Edit today’s entry" : "Edit this entry";
+    }
     if (!pill.hidden) {
       var diff = Math.round((today() - day) / 864e5);
       pill.style.setProperty("--c", col(savedRating)); pill.style.setProperty("--on", on(savedRating));
@@ -242,6 +251,7 @@
     renderToday();
   });
   $("saved-pill").addEventListener("click", function () { editing = true; tapped = true; renderToday(); });
+  $("logged-edit").addEventListener("click", function () { editing = true; tapped = true; renderToday(); });
   var deleteArmed = false;
   $("delete-day").addEventListener("click", function () {
     var btn = $("delete-day");
