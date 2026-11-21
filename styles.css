@@ -220,7 +220,7 @@ button.cell, label.cell.link { cursor: pointer; }
 .after-pick.closed { grid-template-rows: 0fr; opacity: 0; transform: translateY(-8px); margin-top: -22px;
   transition: grid-template-rows .32s cubic-bezier(.4,0,.2,1), opacity .2s ease, transform .32s cubic-bezier(.4,0,.2,1), margin-top .32s cubic-bezier(.4,0,.2,1); }
 .after-pick.instant { transition: none; }
-.after-inner { min-height: 0; overflow: hidden; }
+.after-inner { min-height: 0; overflow: hidden; padding: 4px; margin: -4px; }
 #level-slot:empty { display: none; }
 @media (prefers-reduced-motion: reduce) { .level, .sheet-panel { animation: none; } .rate, .toggle span, .toggle span::after, .after-pick { transition: none; } }
 
