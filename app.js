@@ -2,7 +2,7 @@
    Sync, push reminders and the monthly email plug in through `Sync` below. */
 (function () {
   "use strict";
-  var VERSION = "1.12.2";
+  var VERSION = "1.13.0";
 
   // ---------- The scale (edit wording here) ----------
   var SCALE = [
@@ -143,7 +143,7 @@
   tabs.forEach(function (t) { t.addEventListener("click", function () { showTab(t.dataset.tab); }); });
 
   // ---------- Today ----------
-  var day = today(), selected = null, tapped = false, shownLevel = null, savedRating = null, savedNote = "";
+  var day = today(), selected = null, tapped = false, editing = true, shownLevel = null, savedRating = null, savedNote = "";
   var grid = $("rating-grid"), noteEl = $("note"), saveBtn = $("save"), dayInput = $("day");
   var rateBtns = [];
   SCALE.forEach(function (_, v) {
@@ -151,7 +151,7 @@
     b.type = "button"; b.className = "rate"; b.textContent = v;
     b.style.setProperty("--c", col(v)); b.style.setProperty("--on", on(v));
     b.setAttribute("aria-label", v + ", " + phaseOf(v).name);
-    b.addEventListener("click", function () { selected = selected === v ? null : v; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
+    b.addEventListener("click", function () { selected = !editing ? v : (selected === v ? null : v); editing = true; tapped = true; renderToday(); if (navigator.vibrate) navigator.vibrate(8); });
     rateBtns.push(b);
   });
   // Rating: dots on a line in rows, with the phase names underneath each row.
@@ -180,6 +180,7 @@
     var e = entries[keyOf(d)];
     if (e && !e.deleted) { selected = e.rating; noteEl.value = e.note || ""; savedRating = e.rating; savedNote = e.note || ""; }
     else { selected = null; noteEl.value = ""; savedRating = null; savedNote = ""; }
+    editing = savedRating === null;
     growNote();
     dayInput.value = keyOf(d);
     dayInput.max = keyOf(today());
@@ -190,11 +191,19 @@
   }
 
   function renderToday() {
-    grid.classList.toggle("picked", tapped && selected !== null);
+    var open = selected !== null && editing;
+    grid.classList.toggle("picked", (tapped || !editing) && selected !== null);
     var after = $("after-pick"), wasClosed = after.classList.contains("closed");
-    after.classList.toggle("closed", selected === null);
-    after.inert = selected === null;
-    if (wasClosed && selected !== null) growNote();
+    after.classList.toggle("closed", !open);
+    after.inert = !open;
+    var pill = $("saved-pill");
+    pill.hidden = editing || savedRating === null;
+    if (!pill.hidden) {
+      var diff = Math.round((today() - day) / 864e5);
+      pill.style.setProperty("--c", col(savedRating)); pill.style.setProperty("--on", on(savedRating));
+      $("saved-text").textContent = diff === 0 ? "Saved for today" : diff === 1 ? "Saved for yesterday" : "Saved for this day";
+    }
+    if (wasClosed && open) growNote();
     if (after.classList.contains("instant")) requestAnimationFrame(function () { requestAnimationFrame(function () { after.classList.remove("instant"); }); });
     rateBtns.forEach(function (b, v) {
       b.setAttribute("aria-pressed", v === selected ? "true" : "false");
@@ -228,9 +237,11 @@
     entries[keyOf(day)] = { rating: selected, note: noteEl.value.trim(), updatedAt: new Date().toISOString() };
     noteEl.value = noteEl.value.trim();
     saveEntries();
-    savedRating = selected; savedNote = noteEl.value;
-    renderToday(); toast("Saved");
+    savedRating = selected; savedNote = noteEl.value; editing = false;
+    if (document.activeElement) document.activeElement.blur();
+    renderToday();
   });
+  $("saved-pill").addEventListener("click", function () { editing = true; tapped = true; renderToday(); });
   var deleteArmed = false;
   $("delete-day").addEventListener("click", function () {
     var btn = $("delete-day");
